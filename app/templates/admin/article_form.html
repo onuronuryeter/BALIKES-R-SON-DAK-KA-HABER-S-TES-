@@ -1,0 +1,471 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ "Haber Düzenle" if article else "Yeni Haber" }}{% endblock %}
+{% block page_title %}{{ "✏️ Haber Düzenle" if article else "✏️ Yeni Haber" }}{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<div style="max-width:900px;">
+
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+    <a href="/admin/articles" class="btn btn-secondary btn-sm">← Haberlere Dön</a>
+    {% if article and article.status == 'published' %}
+    <a href="/haber/{{ article.slug }}" target="_blank" class="btn btn-secondary btn-sm">👁 Görüntüle</a>
+    {% endif %}
+  </div>
+
+  <form
+    id="article-form"
+    data-action="{{ 'edit' if article else 'create' }}"
+    {% if article %}data-id="{{ article.id }}"{% endif %}
+    novalidate
+  >
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start;">
+
+      {# ─── Sol Kolon: İçerik ─────────────────────────────────── #}
+      <div>
+
+        <div class="admin-form-card" style="margin-bottom:16px;">
+          <div class="admin-form-header">Haber Bilgileri</div>
+          <div class="admin-form-body">
+
+            <div class="form-group">
+              <label class="form-label" for="title">Başlık <span class="required">*</span></label>
+              <input
+                id="title"
+                name="title"
+                type="text"
+                class="form-control"
+                value="{{ (article.title or '') if article else '' }}"
+                placeholder="Haber başlığını girin..."
+                required
+                data-maxlength="200"
+              >
+              <div class="form-hint">
+                <span class="char-count">0/200</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="slug">Slug (URL)</label>
+              <input
+                id="slug"
+                name="slug"
+                type="text"
+                class="form-control"
+                value="{{ (article.slug or '') if article else '' }}"
+                placeholder="otomatik-olusturulur"
+              >
+              <div class="form-hint">Boş bırakılırsa başlıktan otomatik oluşturulur</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="source_name">
+                Kaynak / Firma Adı
+                <span class="badge" style="background:#ff5e00; color:white; font-size:10px; padding:2px 6px; border-radius:4px; margin-left:4px;">REKLAM İÇİN</span>
+              </label>
+              <input
+                id="source_name"
+                name="source_name"
+                type="text"
+                class="form-control"
+                value="{{ (article.source_name or '') if article else '' }}"
+                placeholder="Örn: Aksoy Pastanesi, Sözcü RSS, vb."
+              >
+              <div class="form-hint" style="color:#e05300;">Özellikle <b>Reklam</b> kategorisindeki içerikler için firmayı (Örn: Aksoy Pastanesi) buraya yazın.</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="excerpt">Spot / Özet</label>
+              <textarea
+                id="excerpt"
+                name="excerpt"
+                class="form-control"
+                rows="3"
+                placeholder="Haberin kısa özeti..."
+                data-maxlength="300"
+              >{{ (article.excerpt or '') if article else '' }}</textarea>
+              <div class="form-hint"><span class="char-count">0/300</span></div>
+            </div>
+
+            <div class="form-group" style="margin-top:20px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <label class="form-label" style="margin-bottom:0;font-size:15px;font-weight:700;">Haber İçeriği ve Görseller</label>
+                <div class="editor-tabs">
+                  <button type="button" class="editor-tab-btn active" id="tab-btn-sectioned" data-tab="sectioned">
+                    🧱 Bölümlü & Çoklu Görsel Sistemi
+                  </button>
+                  <button type="button" class="editor-tab-btn" id="tab-btn-classic" data-tab="classic">
+                    📝 Klasik Tam Metin
+                  </button>
+                </div>
+              </div>
+
+              <!-- ─── BÖLÜMLÜ & ÇOKLU GÖRSEL EDİTÖRÜ ─── -->
+              <div id="sectioned-editor-container">
+                <div class="form-hint" style="margin-bottom:12px;color:#64748b;">
+                  💡 Haberinizi giriş, gelişme ve kapanış bölümlerine ayırıp aralarına bilgisayarınızdan veya internetten yüksek çözünürlüklü görseller ekleyin.
+                </div>
+
+                <div id="sections-wrapper">
+                  <!-- Bölüm 1: En Üst -->
+                  <div class="content-section-card" data-section-index="1">
+                    <div class="section-card-header">
+                      <span class="section-badge top">📍 1. BÖLÜM — HABER GİRİŞİ (EN ÜST)</span>
+                    </div>
+                    <textarea class="form-control section-text" rows="4" placeholder="Haberin ilk paragrafları (Giriş bölümü)..."></textarea>
+                    
+                    <div class="section-image-box">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <span style="font-size:13px;font-weight:600;color:#334155;">🖼️ 1. Görsel Alanı (Üst Görsel)</span>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                          <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">
+                            💻 PC'den Yükle
+                            <input type="file" class="section-file-input" accept="image/*" style="display:none;">
+                          </label>
+                          <span class="section-upload-spinner" style="display:none;font-size:12px;color:#6c757d;">Yükleniyor...</span>
+                        </div>
+                      </div>
+
+                      <!-- Doğrulama Bildirimi -->
+                      <div class="section-confirm-badge upload-confirmation-alert" style="display:none;">
+                        <span class="confirm-icon">✅</span>
+                        <span>Görsel başarıyla yüklendi!</span>
+                        <span class="confirm-filename"></span>
+                      </div>
+
+                      <div class="section-preview-container" style="display:none;">
+                        <div class="section-image-preview-wrapper">
+                          <img src="" class="section-image-preview" alt="Önizleme">
+                          <button type="button" class="section-image-remove-btn" title="Görseli Kaldır">✕</button>
+                        </div>
+                      </div>
+
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
+                        <input type="url" class="form-control form-control-sm section-img-url" placeholder="veya Görsel URL'si (https://...)">
+                        <input type="text" class="form-control form-control-sm section-img-caption" placeholder="Görsel Altyazısı / Açıklaması">
+                      </div>
+                      <div style="margin-top:8px;display:flex;align-items:center;gap:12px;">
+                        <span style="font-size:12px;color:#64748b;">Hizalama:</span>
+                        <select class="form-control form-control-sm section-img-align" style="width:auto;display:inline-block;">
+                          <option value="full-width">Tam Genişlik (Önerilen)</option>
+                          <option value="align-center">Ortalanmış</option>
+                          <option value="align-left">Sola Hizalı</option>
+                          <option value="align-right">Sağa Hizalı</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Bölüm 2: Orta -->
+                  <div class="content-section-card" data-section-index="2">
+                    <div class="section-card-header">
+                      <span class="section-badge middle">📍 2. BÖLÜM — GELİŞME (ORTA BÖLÜM)</span>
+                    </div>
+                    <textarea class="form-control section-text" rows="5" placeholder="Haberin detayları ve gelişmeleri (Orta bölüm)..."></textarea>
+                    
+                    <div class="section-image-box">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <span style="font-size:13px;font-weight:600;color:#334155;">🖼️ 2. Görsel Alanı (Orta Görsel)</span>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                          <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">
+                            💻 PC'den Yükle
+                            <input type="file" class="section-file-input" accept="image/*" style="display:none;">
+                          </label>
+                          <span class="section-upload-spinner" style="display:none;font-size:12px;color:#6c757d;">Yükleniyor...</span>
+                        </div>
+                      </div>
+
+                      <!-- Doğrulama Bildirimi -->
+                      <div class="section-confirm-badge upload-confirmation-alert" style="display:none;">
+                        <span class="confirm-icon">✅</span>
+                        <span>Görsel başarıyla yüklendi!</span>
+                        <span class="confirm-filename"></span>
+                      </div>
+
+                      <div class="section-preview-container" style="display:none;">
+                        <div class="section-image-preview-wrapper">
+                          <img src="" class="section-image-preview" alt="Önizleme">
+                          <button type="button" class="section-image-remove-btn" title="Görseli Kaldır">✕</button>
+                        </div>
+                      </div>
+
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
+                        <input type="url" class="form-control form-control-sm section-img-url" placeholder="veya Görsel URL'si (https://...)">
+                        <input type="text" class="form-control form-control-sm section-img-caption" placeholder="Görsel Altyazısı / Açıklaması">
+                      </div>
+                      <div style="margin-top:8px;display:flex;align-items:center;gap:12px;">
+                        <span style="font-size:12px;color:#64748b;">Hizalama:</span>
+                        <select class="form-control form-control-sm section-img-align" style="width:auto;display:inline-block;">
+                          <option value="full-width">Tam Genişlik (Önerilen)</option>
+                          <option value="align-center">Ortalanmış</option>
+                          <option value="align-left">Sola Hizalı</option>
+                          <option value="align-right">Sağa Hizalı</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Bölüm 3: En Son -->
+                  <div class="content-section-card" data-section-index="3">
+                    <div class="section-card-header">
+                      <span class="section-badge bottom">📍 3. BÖLÜM — SONUÇ & KAPANIŞ (EN SON METİN)</span>
+                    </div>
+                    <textarea class="form-control section-text" rows="4" placeholder="Haberin kapanış ve son değerlendirmeleri (Son bölüm)..."></textarea>
+                    
+                    <div class="section-image-box">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                        <span style="font-size:13px;font-weight:600;color:#334155;">🖼️ 3. Görsel Alanı (En Son Görsel)</span>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                          <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">
+                            💻 PC'den Yükle
+                            <input type="file" class="section-file-input" accept="image/*" style="display:none;">
+                          </label>
+                          <span class="section-upload-spinner" style="display:none;font-size:12px;color:#6c757d;">Yükleniyor...</span>
+                        </div>
+                      </div>
+
+                      <!-- Doğrulama Bildirimi -->
+                      <div class="section-confirm-badge upload-confirmation-alert" style="display:none;">
+                        <span class="confirm-icon">✅</span>
+                        <span>Görsel başarıyla yüklendi!</span>
+                        <span class="confirm-filename"></span>
+                      </div>
+
+                      <div class="section-preview-container" style="display:none;">
+                        <div class="section-image-preview-wrapper">
+                          <img src="" class="section-image-preview" alt="Önizleme">
+                          <button type="button" class="section-image-remove-btn" title="Görseli Kaldır">✕</button>
+                        </div>
+                      </div>
+
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;">
+                        <input type="url" class="form-control form-control-sm section-img-url" placeholder="veya Görsel URL'si (https://...)">
+                        <input type="text" class="form-control form-control-sm section-img-caption" placeholder="Görsel Altyazısı / Açıklaması">
+                      </div>
+                      <div style="margin-top:8px;display:flex;align-items:center;gap:12px;">
+                        <span style="font-size:12px;color:#64748b;">Hizalama:</span>
+                        <select class="form-control form-control-sm section-img-align" style="width:auto;display:inline-block;">
+                          <option value="full-width">Tam Genişlik (Önerilen)</option>
+                          <option value="align-center">Ortalanmış</option>
+                          <option value="align-left">Sola Hizalı</option>
+                          <option value="align-right">Sağa Hizalı</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="button" class="add-section-btn" id="add-new-section-btn" style="margin-top:10px;">
+                  ➕ Yeni Bölüm & Görsel Alanı Ekle
+                </button>
+              </div>
+
+              <!-- ─── KLASİK TAM METİN EDİTÖRÜ (SEKME 2) ─── -->
+              <div id="classic-editor-container" style="display:none;">
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;background:#f1f5f9;padding:10px;border-radius:6px;">
+                  <span style="font-size:13px;font-weight:600;align-self:center;color:#334155;">Hızlı Görsel Ekle:</span>
+                  <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">
+                    💻 PC'den Görsel Ekle
+                    <input type="file" id="classic-pc-upload" accept="image/*" style="display:none;">
+                  </label>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-quick-top-img">⬆️ En Üste Ekle</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-quick-mid-img">↔️ Ortaya Ekle</button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-quick-bot-img">⬇️ En Sona Ekle</button>
+                  <span id="classic-upload-spinner" style="display:none;font-size:12px;color:#6c757d;align-self:center;">Yükleniyor...</span>
+                </div>
+                <textarea id="classic-content-textarea" class="form-control" rows="18" placeholder="Haber metni ve HTML içeriği..."></textarea>
+              </div>
+
+              <!-- Gerçek içerik backend'e gizli textarea ile gidecek -->
+              <textarea
+                id="content"
+                name="content"
+                style="display:none;"
+              >{{ (article.content or '') if (article and article.content and article.content != 'None') else '' }}</textarea>
+            </div>
+
+          </div>
+        </div>
+
+        {# SEO #}
+        <div class="admin-form-card">
+          <div class="admin-form-header">🔍 SEO Ayarları</div>
+          <div class="admin-form-body">
+            <div class="form-group">
+              <label class="form-label" for="seo_title">SEO Başlığı</label>
+              <input
+                id="seo_title"
+                name="seo_title"
+                type="text"
+                class="form-control"
+                value="{{ (article.meta_title or '') if article else '' }}"
+                placeholder="Boş bırakılırsa haber başlığı kullanılır"
+                data-maxlength="70"
+              >
+              <div class="form-hint"><span class="char-count">0/70</span> karakter (önerilen: 50-60)</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="seo_description">Meta Description</label>
+              <textarea
+                id="seo_description"
+                name="seo_description"
+                class="form-control"
+                rows="3"
+                placeholder="Boş bırakılırsa spot kullanılır"
+                data-maxlength="160"
+              >{{ (article.meta_description or '') if article else '' }}</textarea>
+              <div class="form-hint"><span class="char-count">0/160</span> karakter (önerilen: 120-155)</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {# ─── Sağ Kolon: Seçenekler ────────────────────────────── #}
+      <div>
+
+        {# Yayın Seçenekleri #}
+        <div class="admin-form-card" style="margin-bottom:16px;">
+          <div class="admin-form-header">Yayın Seçenekleri</div>
+          <div class="admin-form-body">
+
+            <div class="form-group">
+              <label class="form-label" for="status">Durum</label>
+              <select id="status" name="status" class="form-control">
+                <option value="draft" {% if not article or article.status == 'draft' %}selected{% endif %}>Taslak</option>
+                <option value="pending_review" {% if article and article.status == 'pending_review' %}selected{% endif %}>İncelemeye Al</option>
+                <option value="published" {% if article and article.status == 'published' %}selected{% endif %}>Yayınla</option>
+                <option value="archived" {% if article and article.status == 'archived' %}selected{% endif %}>Arşive Al</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="category_id">Kategori</label>
+              <select id="category_id" name="category_id" class="form-control">
+                <option value="">— Kategori Seç —</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}"
+                  {% if article and article.category_id == cat.id %}selected{% endif %}>
+                  {{ "  └ " if cat.parent_id else "" }}{{ cat.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group">
+              <div class="form-check">
+                <input type="checkbox" id="is_breaking" name="is_breaking"
+                  {% if article and article.is_breaking %}checked{% endif %}>
+                <label for="is_breaking">⚡ Son Dakika Haberi</label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="form-check">
+                <input type="checkbox" id="is_featured" name="is_featured"
+                  {% if article and article.is_featured %}checked{% endif %}>
+                <label for="is_featured">⭐ Öne Çıkan Haber</label>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:16px;">
+              <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">
+                {{ "💾 Güncelle" if article else "💾 Kaydet" }}
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        {# Görsel #}
+        <div class="admin-form-card" style="margin-bottom:16px;">
+          <div class="admin-form-header">Kapak Görseli</div>
+          <div class="admin-form-body">
+            <!-- Kapak Görseli Canlı Önizleme -->
+            <div id="featured_image_preview_box" style="{% if not (article and article.featured_image and article.featured_image != 'None') %}display:none;{% endif %}position:relative;margin-bottom:12px;">
+              <img id="featured_image_preview_img" src="{{ (article.featured_image or '') if (article and article.featured_image and article.featured_image != 'None') else '' }}" style="width:100%;border-radius:6px;max-height:200px;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,0.1);" alt="Kapak görseli">
+              <button type="button" id="featured_image_remove_btn" class="section-image-remove-btn" title="Kapak Görselini Kaldır">✕</button>
+            </div>
+
+            <!-- Doğrulama Bildirimi -->
+            <div id="featured_image_confirm" class="upload-confirmation-alert" style="display:none;">
+              <span class="confirm-icon">✅</span>
+              <span>Kapak görseli yüklendi!</span>
+              <span class="confirm-filename" id="featured_confirm_filename"></span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="featured_image_upload">PC'den Kapak Görseli Seç</label>
+              <input type="file" id="featured_image_upload" class="form-control" accept="image/*">
+              <div id="featured_image_loading" style="display:none;font-size:12px;color:#6c757d;margin-top:4px;">
+                <span class="loading-spinner"></span> Görsel yükleniyor...
+              </div>
+            </div>
+            
+            <div style="text-align:center; font-size:12px; margin: 10px 0; color:#adb5bd;">-- VEYA URL GİRİN --</div>
+            
+            <div class="form-group">
+              <label class="form-label" for="featured_image">Görsel URL</label>
+              <input
+                id="featured_image"
+                name="featured_image"
+                type="url"
+                class="form-control"
+                value="{{ (article.featured_image or '') if (article and article.featured_image and article.featured_image != 'None') else '' }}"
+                placeholder="https://..."
+              >
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="featured_image_alt">Alt Metin</label>
+              <input
+                id="featured_image_alt"
+                name="featured_image_alt"
+                type="text"
+                class="form-control"
+                value="{{ (article.featured_image_alt or '') if (article and article.featured_image_alt and article.featured_image_alt != 'None') else '' }}"
+                placeholder="Görsel açıklaması..."
+              >
+            </div>
+          </div>
+        </div>
+
+        {# Kaynak #}
+        <div class="admin-form-card">
+          <div class="admin-form-header">Kaynak Bilgisi</div>
+          <div class="admin-form-body">
+            <div class="form-group">
+              <label class="form-label" for="source_name">Kaynak Adı</label>
+              <input
+                id="source_name"
+                name="source_name"
+                type="text"
+                class="form-control"
+                value="{{ (article.source_name or '') if (article and article.source_name and article.source_name != 'None') else '' }}"
+                placeholder="ör: TRT Haber"
+              >
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="source_url">Kaynak URL</label>
+              <input
+                id="source_url"
+                name="source_url"
+                type="url"
+                class="form-control"
+                value="{{ (article.source_url or '') if (article and article.source_url and article.source_url != 'None') else '' }}"
+                placeholder="https://..."
+              >
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}

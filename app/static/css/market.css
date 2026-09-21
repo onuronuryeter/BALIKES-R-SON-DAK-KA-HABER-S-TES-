@@ -1,0 +1,72 @@
+/* Piyasa Takip Modülü CSS */
+.market-ticker {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 13px;
+  padding: 8px 0;
+}
+.market-ticker-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.market-data-container {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.market-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.market-name {
+  font-weight: 600;
+  color: #495057;
+}
+.market-price {
+  font-weight: 700;
+  color: #212529;
+}
+.market-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.market-live {
+  background-color: #e63946;
+  color: white;
+}
+.market-ref {
+  background-color: #6c757d;
+  color: white;
+}
+.market-unavailable {
+  background-color: #dee2e6;
+  color: #6c757d;
+}
+.unavailable-text {
+  color: #6c757d;
+  font-style: italic;
+  font-weight: normal;
+}
+.market-meta {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+/* Mobil için dar ekran optimizasyonu */
+@media (max-width: 768px) {
+  .market-ticker-inner {
+    flex-direction: column;
+    align-items: center;
+  }
+  .market-data-container {
+    justify-content: center;
+    gap: 15px;
+  }
+}

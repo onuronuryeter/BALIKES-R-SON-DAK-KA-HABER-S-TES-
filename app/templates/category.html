@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block seo_title %}{{ category.seo_title or (category.name + " Haberleri") }} — {{ site_name }}{% endblock %}
+{% block meta_description %}{{ category.seo_description or (category.name + " kategorisindeki son haberler - " + site_name) }}{% endblock %}
+{% block og_title %}{{ category.name }} Haberleri{% endblock %}
+
+{% block breadcrumb %}
+<nav class="breadcrumb" aria-label="Sayfa Konumu">
+  <div class="container">
+    <ol>
+      <li><a href="/">Ana Sayfa</a></li>
+      {% if category.parent %}
+      <li><a href="/kategori/{{ category.parent.slug }}">{{ category.parent.name }}</a></li>
+      {% endif %}
+      <li aria-current="page">{{ category.name }}</li>
+    </ol>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="page-main">
+  <div class="container">
+
+    <div class="section-header" style="margin-bottom:24px;">
+      <h1 class="section-title">
+        <span class="dot" style="background:{{ category.color or '#c1121f' }};"></span>
+        {{ category.name }} Haberleri
+      </h1>
+      {% if total %}<span style="font-size:13px;color:#6c757d;">{{ total }} haber</span>{% endif %}
+    </div>
+
+    {% if category.description %}
+    <p style="color:#6c757d;margin-bottom:20px;font-size:14px;">{{ category.description }}</p>
+    {% endif %}
+
+    {# Alt kategoriler (ilçeler için) #}
+    {% if sub_categories %}
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;">
+      {% for sub in sub_categories %}
+      <a href="/kategori/{{ sub.slug }}" style="
+        padding:6px 14px;border:1px solid #e9ecef;border-radius:20px;
+        font-size:12px;font-weight:600;color:#495057;transition:all 0.18s;
+      " onmouseover="this.style.background='#c1121f';this.style.color='white';" onmouseout="this.style.background='';this.style.color='#495057';">
+        {{ sub.name }}
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="main-layout">
+      <div class="content-area">
+
+        {% if articles %}
+        <div class="news-grid-3" style="margin-bottom:28px;">
+          {% for article in articles %}
+          <div class="news-card">
+            <div class="news-card-img">
+              <img src="{{ article.featured_image if (article.featured_image and article.featured_image != 'None') else '/static/images/news-placeholder.jpg' }}" alt="{{ article.title }}" loading="lazy" style="object-fit: cover; aspect-ratio: 16/9; width: 100%; height: 100%;">
+            </div>
+            <div class="news-card-body">
+              <div class="news-card-meta">
+                {% if article.is_breaking %}<span class="breaking-badge">Son Dakika</span>{% endif %}
+                <span class="news-time" data-time="{{ article.published_at }}"></span>
+              </div>
+              <h2 class="news-card-title">
+                <a href="/haber/{{ article.slug }}">{{ article.title }}</a>
+              </h2>
+              <p class="news-card-excerpt">{{ article.excerpt | striptags | truncate(120) }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        {# Pagination #}
+        {% if pages > 1 %}
+        <nav class="pagination" aria-label="Sayfa Navigasyonu">
+          {% if page > 1 %}
+          <a href="?sayfa={{ page - 1 }}" class="page-btn" aria-label="Önceki Sayfa">‹</a>
+          {% else %}
+          <span class="page-btn disabled">‹</span>
+          {% endif %}
+
+          {% for p in range(1, pages + 1) %}
+          {% if p == page %}
+          <span class="page-btn active" aria-current="page">{{ p }}</span>
+          {% elif p == 1 or p == pages or (p >= page - 2 and p <= page + 2) %}
+          <a href="?sayfa={{ p }}" class="page-btn">{{ p }}</a>
+          {% elif p == page - 3 or p == page + 3 %}
+          <span class="page-btn disabled" style="width:auto;padding:0 4px;">…</span>
+          {% endif %}
+          {% endfor %}
+
+          {% if page < pages %}
+          <a href="?sayfa={{ page + 1 }}" class="page-btn" aria-label="Sonraki Sayfa">›</a>
+          {% else %}
+          <span class="page-btn disabled">›</span>
+          {% endif %}
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-state-icon">📰</div>
+          <h2 class="empty-state-title">Bu kategoride henüz haber yok</h2>
+          <p class="empty-state-desc">Yakında haberler eklenecek.</p>
+        </div>
+        {% endif %}
+
+        {# İlçe Rehberleri SEO İçerikleri #}
+        {% if category.slug in ['karesi', 'altieylul', 'bandirma', 'edremit', 'ayvalik', 'burhaniye'] %}
+          {% include 'districts/' ~ category.slug ~ '.html' %}
+        {% endif %}
+
+      </div>
+
+      {# Sidebar #}
+      <aside class="sidebar">
+        <div class="widget">
+          <div class="widget-header">🔥 Popüler</div>
+          <div class="widget-body">
+            {% if popular_articles %}
+            {% for a in popular_articles[:6] %}
+            <div class="popular-item">
+              <span class="popular-num">{{ loop.index }}</span>
+              <div>
+                <div class="popular-title"><a href="/haber/{{ a.slug }}">{{ a.title }}</a></div>
+                <div class="popular-time" data-time="{{ a.published_at }}"></div>
+              </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p style="font-size:13px;color:#6c757d;">Henüz haber yok.</p>
+            {% endif %}
+          </div>
+        </div>
+        <div class="widget">
+          <div class="widget-header">📂 Kategoriler</div>
+          <div class="widget-body">
+            <nav class="footer-links">
+              {% for cat in top_nav_categories %}
+              <a href="/kategori/{{ cat.slug }}">{{ cat.name }}</a>
+              {% endfor %}
+            </nav>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

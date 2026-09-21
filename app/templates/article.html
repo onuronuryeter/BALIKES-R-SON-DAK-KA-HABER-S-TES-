@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block seo_title %}{{ article.seo_title or article.title }} — {{ site_name }}{% endblock %}
+{% block meta_description %}{{ article.seo_description or article.excerpt or article.title }}{% endblock %}
+{% block robots %}index, follow{% endblock %}
+{% block canonical %}{{ site_url }}/haber/{{ article.slug }}{% endblock %}
+{% block og_title %}{{ article.seo_title or article.title }}{% endblock %}
+{% block og_description %}{{ article.seo_description or article.excerpt or "" }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_image %}{{ (article.featured_image if (article.featured_image and article.featured_image != 'None') else (site_url + "/static/images/og-default.jpg")) }}{% endblock %}
+{% block twitter_title %}{{ article.seo_title or article.title }}{% endblock %}
+{% block twitter_description %}{{ article.seo_description or article.excerpt or "" }}{% endblock %}
+{% block twitter_image %}{{ (article.featured_image if (article.featured_image and article.featured_image != 'None') else (site_url + "/static/images/og-default.jpg")) }}{% endblock %}
+
+{% block json_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "NewsArticle",
+      "headline": {{ (article.seo_title or article.title) | tojson }},
+      "description": {{ (article.seo_description or article.excerpt or "") | tojson }},
+      "url": "{{ site_url }}/haber/{{ article.slug }}",
+      "datePublished": "{{ article.published_at }}",
+      "dateModified": "{{ article.updated_at }}",
+      "image": "{{ (article.featured_image if (article.featured_image and article.featured_image != 'None') else (site_url + '/static/images/og-default.jpg')) }}",
+      "publisher": {
+        "@type": "Organization",
+        "name": "{{ site_name }}",
+        "url": "{{ site_url }}"
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "{{ site_url }}/haber/{{ article.slug }}"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Ana Sayfa", "item": "{{ site_url }}/"},
+        {% if category %}
+        {"@type": "ListItem", "position": 2, "name": {{ category.name | tojson }}, "item": "{{ site_url }}/kategori/{{ category.slug }}"},
+        {"@type": "ListItem", "position": 3, "name": {{ article.title | tojson }}},
+        {% else %}
+        {"@type": "ListItem", "position": 2, "name": {{ article.title | tojson }}}
+        {% endif %}
+      ]
+    }
+  ]
+}
+</script>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav class="breadcrumb" aria-label="Sayfa Konumu">
+  <div class="container">
+    <ol>
+      <li><a href="/">Ana Sayfa</a></li>
+      {% if category %}
+      <li><a href="/kategori/{{ category.slug }}">{{ category.name }}</a></li>
+      {% endif %}
+      <li aria-current="page">{{ article.title | truncate(60) }}</li>
+    </ol>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="page-main">
+  <div class="container">
+    <div class="article-layout">
+
+      {# ─── HABER İÇERİĞİ ──────────────────────────────────────── #}
+      <article>
+
+        <header class="article-header">
+          {% if category %}
+          <a href="/kategori/{{ category.slug }}" class="article-category-badge">{{ category.name }}</a>
+          {% endif %}
+          {% if article.is_breaking %}
+          <span class="breaking-badge" style="margin-left:8px;">⚡ Son Dakika</span>
+          {% endif %}
+
+          <h1 class="article-title">{{ article.title }}</h1>
+
+          <div class="article-meta">
+            <span class="article-meta-item">
+              🕐 <time datetime="{{ article.published_at }}" data-time="{{ article.published_at }}">
+                {{ article.published_at }}
+              </time>
+            </span>
+            {% if article.updated_at and article.updated_at != article.published_at %}
+            <span class="article-meta-item">
+              🔄 Güncellendi: <time datetime="{{ article.updated_at }}" data-time="{{ article.updated_at }}"></time>
+            </span>
+            {% endif %}
+            <span class="article-meta-item">👁 {{ article.view_count }} okunma</span>
+            {% if article.source_name %}
+            <span class="article-meta-item">📎 Kaynak: {{ article.source_name }}</span>
+            {% endif %}
+          </div>
+        </header>
+
+        {# Kapak Görseli #}
+        <figure class="article-featured-image">
+          <img
+            src="{{ article.featured_image if (article.featured_image and article.featured_image != 'None') else '/static/images/news-placeholder.jpg' }}"
+            alt="{{ (article.featured_image_alt if (article.featured_image_alt and article.featured_image_alt != 'None') else article.title) }}"
+            loading="eager"
+            style="object-fit: cover; width: 100%;"
+          >
+          {% if article.featured_image_caption and article.featured_image_caption != 'None' %}
+          <figcaption class="article-caption">{{ article.featured_image_caption }}</figcaption>
+          {% endif %}
+        </figure>
+
+        {# Spot / Özet #}
+        {% if article.excerpt and article.excerpt != 'None' %}
+        <p style="font-size:17px;font-weight:500;color:#495057;line-height:1.7;border-left:4px solid #c1121f;padding-left:16px;margin-bottom:24px;font-style:italic;">
+          {{ article.excerpt }}
+        </p>
+        {% endif %}
+
+        {# Haber İçeriği #}
+        <div class="article-body">
+          {% if article.content and article.content.strip() != 'None' and article.content.strip() != '' %}
+          {{ article.content | safe }}
+          {% else %}
+          <p style="color:#6c757d;font-style:italic;">İçerik henüz eklenmemiş.</p>
+          {% endif %}
+        </div>
+
+        {# Kaynak Bilgisi #}
+        {% if article.source_url or article.source_name %}
+        <div class="article-source">
+          <strong>Kaynak:</strong>
+          {% if article.source_url %}
+          <a href="{{ article.source_url }}" target="_blank" rel="noopener noreferrer nofollow">
+            {{ article.source_name or article.source_url }}
+          </a>
+          {% else %}
+          {{ article.source_name }}
+          {% endif %}
+        </div>
+        {% endif %}
+
+        {# Paylaşım Butonları #}
+        <div class="article-share">
+          <span class="share-label">Paylaş:</span>
+          <button class="share-btn twitter" data-share="twitter" aria-label="Twitter'da Paylaş">
+            🐦 Twitter
+          </button>
+          <button class="share-btn facebook" data-share="facebook" aria-label="Facebook'ta Paylaş">
+            📘 Facebook
+          </button>
+          <button class="share-btn whatsapp" data-share="whatsapp" aria-label="WhatsApp'ta Paylaş">
+            💬 WhatsApp
+          </button>
+        </div>
+
+        {# Yorumlar #}
+        <section class="comments-section" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e9ecef;">
+          <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 20px; color: var(--color-primary);">Yorumlar</h2>
+          
+          {% if current_user %}
+            <form method="POST" action="/api/comments" style="margin-bottom: 30px;">
+              <input type="hidden" name="article_id" value="{{ article.id }}">
+              <textarea name="content" required placeholder="Yorumunuzu buraya yazın..." style="width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 4px; min-height: 100px; margin-bottom: 10px; font-family: inherit; resize: vertical;"></textarea>
+              <button type="submit" class="login-btn" style="background: var(--color-primary); color: white; border: none; padding: 10px 20px; font-size: 14px; cursor: pointer;">Yorum Gönder</button>
+            </form>
+          {% else %}
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 30px; text-align: center;">
+              Yorum yapmak için lütfen <a href="/giris-yap" style="color: var(--color-primary); font-weight: bold;">giriş yapın</a> veya <a href="/kayit-ol" style="color: var(--color-primary); font-weight: bold;">kayıt olun</a>.
+            </div>
+          {% endif %}
+
+          <div class="comments-list">
+            {% if comments %}
+              {% for comment in comments %}
+                <div class="comment-item" style="border-bottom: 1px solid #e9ecef; padding: 15px 0;">
+                  <div style="font-weight: 600; color: #212529; margin-bottom: 5px;">
+                    {{ comment.user.full_name or comment.user.username }}
+                    <span style="font-size: 12px; color: #6c757d; font-weight: normal; margin-left: 10px;">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                  </div>
+                  <div style="color: #495057; font-size: 15px; line-height: 1.5;">
+                    {{ comment.content }}
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p style="color: #6c757d; font-style: italic;">Henüz yorum yapılmamış. İlk yorumu siz yapın!</p>
+            {% endif %}
+          </div>
+        </section>
+
+        {# İlgili Haberler #}
+        {% if related_articles %}
+        <section class="related-articles">
+          <div class="section-header">
+            <h2 class="section-title"><span class="dot"></span>İlgili Haberler</h2>
+          </div>
+          <div class="news-grid-3">
+            {% for rel in related_articles %}
+            <div class="news-card">
+              <div class="news-card-img">
+                <img src="{{ rel.featured_image if (rel.featured_image and rel.featured_image != 'None') else '/static/images/news-placeholder.jpg' }}" alt="{{ rel.title }}" loading="lazy" style="object-fit: cover; aspect-ratio: 16/9; width: 100%; height: 100%;">
+              </div>
+              <div class="news-card-body">
+                <div class="news-card-meta">
+                  <span class="news-time" data-time="{{ rel.published_at }}"></span>
+                </div>
+                <h3 class="news-card-title">
+                  <a href="/haber/{{ rel.slug }}">{{ rel.title }}</a>
+                </h3>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </section>
+        {% endif %}
+
+      </article>
+
+      {# ─── SIDEBAR ─────────────────────────────────────────────── #}
+      <aside class="sidebar" aria-label="Yan Sütun">
+
+        {# Popüler Haberler #}
+        <div class="widget">
+          <div class="widget-header">🔥 Popüler Haberler</div>
+          <div class="widget-body">
+            {% if popular_articles %}
+            {% for a in popular_articles[:6] %}
+            <div class="popular-item">
+              <span class="popular-num">{{ loop.index }}</span>
+              <div>
+                <div class="popular-title"><a href="/haber/{{ a.slug }}">{{ a.title }}</a></div>
+                <div class="popular-time" data-time="{{ a.published_at }}"></div>
+              </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p style="font-size:13px;color:#6c757d;">Henüz haber yok.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        {# Kategori linkleri #}
+        <div class="widget">
+          <div class="widget-header">📂 Kategoriler</div>
+          <div class="widget-body">
+            <nav class="footer-links">
+              {% for cat in top_nav_categories %}
+              <a href="/kategori/{{ cat.slug }}">{{ cat.name }}</a>
+              {% endfor %}
+            </nav>
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

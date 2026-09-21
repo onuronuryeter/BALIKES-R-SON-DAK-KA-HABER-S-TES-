@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Admin Paneli{% endblock %} — {{ site_name }}</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="/static/css/style.css?v=3.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+<div class="admin-layout">
+
+  {# ─── SİDEBAR ────────────────────────────────────────────────── #}
+  <aside class="admin-sidebar" role="navigation" aria-label="Admin Menüsü">
+    <div class="admin-sidebar-logo">
+      BALIKESİR <span>SON DAKİKA</span>
+      <div style="font-size:10px;opacity:0.5;font-weight:400;margin-top:2px;">Admin Paneli</div>
+    </div>
+
+    <nav class="admin-nav">
+      <div class="admin-nav-section">Genel</div>
+      <li class="admin-nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+        <a href="/admin"><span class="admin-nav-icon">📊</span> Dashboard</a>
+      </li>
+
+      <div class="admin-nav-section" style="margin-top:8px;">Haberler</div>
+      <li class="admin-nav-item {% if active_page == 'articles' %}active{% endif %}">
+        <a href="/admin/articles"><span class="admin-nav-icon">📰</span> Haberler</a>
+      </li>
+      <li class="admin-nav-item {% if active_page == 'article-new' %}active{% endif %}">
+        <a href="/admin/articles/new"><span class="admin-nav-icon">✏️</span> Yeni Haber</a>
+      </li>
+
+      <div class="admin-nav-section" style="margin-top:8px;">Yönetim</div>
+      <li class="admin-nav-item {% if active_page == 'categories' %}active{% endif %}">
+        <a href="/admin/categories"><span class="admin-nav-icon">📂</span> Kategoriler</a>
+      </li>
+      <li class="admin-nav-item {% if active_page == 'sources' %}active{% endif %}">
+        <a href="/admin/sources"><span class="admin-nav-icon">📡</span> RSS Kaynakları</a>
+      </li>
+
+      <div class="admin-nav-section" style="margin-top:8px;">Sistem</div>
+      <li class="admin-nav-item">
+        <a href="/" target="_blank"><span class="admin-nav-icon">🌐</span> Siteye Git</a>
+      </li>
+      <li class="admin-nav-item">
+        <a href="/api/docs" target="_blank"><span class="admin-nav-icon">📚</span> API Docs</a>
+      </li>
+      <li class="admin-nav-item" style="margin-top:auto;">
+        <a href="#" id="logout-btn"><span class="admin-nav-icon">🚪</span> Çıkış Yap</a>
+      </li>
+    </nav>
+  </aside>
+
+  {# ─── ANA İÇERİK ──────────────────────────────────────────────── #}
+  <div class="admin-content">
+
+    <header class="admin-topbar">
+      <div class="admin-topbar-title">{% block page_title %}Admin{% endblock %}</div>
+      <div class="admin-user-info">
+        <span>👤 {{ current_user.username if current_user else 'Admin' }}</span>
+        <span style="color:#e9ecef;">|</span>
+        <a href="/" target="_blank" style="font-size:12px;color:#6c757d;">Siteye Git ↗</a>
+      </div>
+    </header>
+
+    <main class="admin-main" id="admin-main-content">
+      {% block content %}{% endblock %}
+    </main>
+
+  </div>
+
+</div>
+
+<script src="/static/js/main.js?v=3.0" defer></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

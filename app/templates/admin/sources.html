@@ -1,0 +1,152 @@
+{% extends "admin/base.html" %}
+{% block title %}RSS Kaynakları{% endblock %}
+{% block page_title %}📡 RSS Kaynakları{% endblock %}
+
+{% block content %}
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+  <p style="font-size:13px;color:#6c757d;">RSS ve haber kaynaklarını buradan yönetebilirsiniz.</p>
+  <button class="btn btn-primary" onclick="document.getElementById('add-source-modal').style.display='flex'">
+    + Kaynak Ekle
+  </button>
+</div>
+
+<div class="admin-table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Kaynak Adı</th>
+        <th>URL</th>
+        <th>Tür</th>
+        <th>Durum</th>
+        <th>Son Kontrol</th>
+        <th>İşlem</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if sources %}
+      {% for source in sources %}
+      <tr>
+        <td style="color:#adb5bd;font-size:12px;">{{ source.id }}</td>
+        <td style="font-weight:600;font-size:13px;">{{ source.name }}</td>
+        <td style="font-size:11px;max-width:200px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">
+          <a href="{{ source.url }}" target="_blank" style="color:#6c757d;" rel="noopener">{{ source.url }}</a>
+        </td>
+        <td>
+          <span class="status-badge draft">{{ source.type | upper }}</span>
+        </td>
+        <td>
+          {% if source.is_active %}
+          <span class="status-badge published">Aktif</span>
+          {% else %}
+          <span class="status-badge archived">Pasif</span>
+          {% endif %}
+        </td>
+        <td style="font-size:11px;white-space:nowrap;">
+          <span data-time="{{ source.last_checked }}">{{ source.last_checked or "—" }}</span>
+        </td>
+        <td>
+          <div style="display:flex;gap:4px;">
+            <button
+              class="btn btn-sm {% if source.is_active %}btn-secondary{% else %}btn-success{% endif %} toggle-source-btn"
+              data-id="{{ source.id }}"
+              data-active="{{ 'true' if source.is_active else 'false' }}"
+            >
+              {{ "Pasif Yap" if source.is_active else "Aktif Yap" }}
+            </button>
+            <button class="btn btn-sm btn-danger delete-source-btn" data-id="{{ source.id }}">Sil</button>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      {% else %}
+      <tr><td colspan="7" style="text-align:center;padding:40px;color:#6c757d;">Henüz kaynak eklenmemiş.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+{# ─── KAYNAK EKLEME MODALI ─────────────────────────────────────── #}
+<div id="add-source-modal" style="
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
+  z-index:9000;align-items:center;justify-content:center;
+">
+  <div style="background:white;border-radius:12px;padding:28px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h3 style="font-size:17px;font-weight:700;">Yeni RSS Kaynağı Ekle</h3>
+      <button onclick="document.getElementById('add-source-modal').style.display='none'" style="font-size:20px;cursor:pointer;background:none;border:none;">×</button>
+    </div>
+    <form id="add-source-form">
+      <div class="form-group">
+        <label class="form-label" for="src-name">Kaynak Adı <span class="required">*</span></label>
+        <input id="src-name" name="name" type="text" class="form-control" placeholder="ör: TRT Haber" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="src-url">RSS URL <span class="required">*</span></label>
+        <input id="src-url" name="url" type="url" class="form-control" placeholder="https://example.com/rss" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="src-type">Tür</label>
+          <select id="src-type" name="type" class="form-control">
+            <option value="rss">RSS</option>
+            <option value="api">API</option>
+            <option value="scraper">Scraper</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="src-interval">Kontrol Aralığı (dk)</label>
+          <input id="src-interval" name="fetch_interval_minutes" type="number" class="form-control" value="15" min="5">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="src-notes">Notlar</label>
+        <textarea id="src-notes" name="notes" class="form-control" rows="2" placeholder="İsteğe bağlı notlar..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('add-source-modal').style.display='none'">İptal</button>
+        <button type="submit" class="btn btn-primary" id="add-source-btn">Kaynak Ekle</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('add-source-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('add-source-btn');
+  btn.disabled = true;
+  btn.textContent = 'Ekleniyor...';
+
+  const fd = new FormData(this);
+  const body = {};
+  fd.forEach((v,k) => { if(v) body[k] = v; });
+  if (body.fetch_interval_minutes) body.fetch_interval_minutes = parseInt(body.fetch_interval_minutes);
+
+  try {
+    const res = await fetch('/api/sources/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+      credentials: 'include',
+    });
+    if (res.ok) {
+      window.location.reload();
+    } else {
+      const d = await res.json();
+      alert(d.detail || 'Hata oluştu');
+      btn.disabled = false;
+      btn.textContent = 'Kaynak Ekle';
+    }
+  } catch {
+    alert('Bağlantı hatası');
+    btn.disabled = false;
+    btn.textContent = 'Kaynak Ekle';
+  }
+});
+</script>
+{% endblock %}

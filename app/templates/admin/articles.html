@@ -1,0 +1,107 @@
+{% extends "admin/base.html" %}
+{% block title %}Haberler{% endblock %}
+{% block page_title %}📰 Haberler{% endblock %}
+
+{% block content %}
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <a href="/admin/articles" class="btn btn-sm {% if not filter_status %}btn-primary{% else %}btn-secondary{% endif %}">Tümü</a>
+    <a href="/admin/articles?status=published" class="btn btn-sm {% if filter_status == 'published' %}btn-primary{% else %}btn-secondary{% endif %}">Yayında</a>
+    <a href="/admin/articles?status=pending_review" class="btn btn-sm {% if filter_status == 'pending_review' %}btn-primary{% else %}btn-secondary{% endif %}">İncelemede</a>
+    <a href="/admin/articles?status=draft" class="btn btn-sm {% if filter_status == 'draft' %}btn-primary{% else %}btn-secondary{% endif %}">Taslak</a>
+  </div>
+  <a href="/admin/articles/new" class="btn btn-primary">✏️ Yeni Haber</a>
+</div>
+
+<div class="admin-table-wrap">
+  <div class="admin-table-header">
+    <span>Toplam: <strong>{{ total }}</strong> haber</span>
+    <form method="get" style="display:flex;gap:6px;" action="/admin/articles">
+      {% if filter_status %}<input type="hidden" name="status" value="{{ filter_status }}">{% endif %}
+      <input type="search" name="q" value="{{ search_q or '' }}" placeholder="Haber ara..." class="form-control" style="width:200px;padding:5px 10px;font-size:13px;">
+      <button type="submit" class="btn btn-sm btn-secondary">Ara</button>
+    </form>
+  </div>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th style="width:40px;">#</th>
+        <th>Başlık</th>
+        <th>Kaynak</th>
+        <th>Durum</th>
+        <th>Tarih</th>
+        <th>Görüntülenme</th>
+        <th>İşlem</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if articles %}
+      {% for article in articles %}
+      <tr>
+        <td style="color:#adb5bd;font-size:12px;">{{ article.id }}</td>
+        <td style="max-width:320px;">
+          <div style="font-weight:600;font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+            {{ article.title }}
+          </div>
+          {% if article.is_breaking %}
+          <span class="breaking-badge" style="font-size:9px;padding:1px 5px;margin-top:2px;display:inline-block;">⚡ Son Dakika</span>
+          {% endif %}
+          {% if article.is_featured %}
+          <span class="status-badge published" style="font-size:9px;padding:1px 5px;margin-top:2px;display:inline-block;">⭐ Öne Çıkan</span>
+          {% endif %}
+        </td>
+        <td style="font-size:12px;max-width:100px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">{{ article.source_name or "—" }}</td>
+        <td>
+          <span class="status-badge {{ article.status }}">
+            {% if article.status == 'published' %}Yayında
+            {% elif article.status == 'pending_review' %}İncelemede
+            {% elif article.status == 'draft' %}Taslak
+            {% else %}Arşiv{% endif %}
+          </span>
+        </td>
+        <td style="font-size:11px;white-space:nowrap;">
+          <span data-time="{{ article.created_at }}">{{ article.created_at }}</span>
+        </td>
+        <td style="font-size:12px;text-align:center;">{{ article.view_count }}</td>
+        <td>
+          <div style="display:flex;gap:4px;flex-wrap:nowrap;">
+            <a href="/admin/articles/{{ article.id }}/edit" class="btn btn-sm btn-secondary" title="Düzenle">✏️</a>
+            {% if article.status == 'published' %}
+            <a href="/haber/{{ article.slug }}" target="_blank" class="btn btn-sm btn-secondary" title="Görüntüle">👁</a>
+            {% endif %}
+            {% if article.status != 'published' %}
+            <button class="btn btn-sm btn-success publish-article-btn" data-id="{{ article.id }}" title="Yayınla">✅</button>
+            {% endif %}
+            <button class="btn btn-sm btn-danger delete-article-btn" data-id="{{ article.id }}" data-title="{{ article.title }}" title="Sil">🗑</button>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      {% else %}
+      <tr><td colspan="7" style="text-align:center;padding:40px;color:#6c757d;">Haber bulunamadı.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+{# Pagination #}
+{% if pages > 1 %}
+<nav class="pagination" style="margin-top:20px;">
+  {% if page > 1 %}
+  <a href="?sayfa={{ page-1 }}{% if filter_status %}&status={{ filter_status }}{% endif %}" class="page-btn">‹</a>
+  {% endif %}
+  {% for p in range(1, pages + 1) %}
+  {% if p == page %}
+  <span class="page-btn active">{{ p }}</span>
+  {% elif p == 1 or p == pages or (p >= page - 2 and p <= page + 2) %}
+  <a href="?sayfa={{ p }}{% if filter_status %}&status={{ filter_status }}{% endif %}" class="page-btn">{{ p }}</a>
+  {% endif %}
+  {% endfor %}
+  {% if page < pages %}
+  <a href="?sayfa={{ page+1 }}{% if filter_status %}&status={{ filter_status }}{% endif %}" class="page-btn">›</a>
+  {% endif %}
+</nav>
+{% endif %}
+
+{% endblock %}

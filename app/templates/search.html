@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block seo_title %}{{ query }} için Arama Sonuçları — {{ site_name }}{% endblock %}
+{% block meta_description %}{{ site_name }}'de "{{ query }}" araması sonuçları.{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+
+{% block breadcrumb %}
+<nav class="breadcrumb" aria-label="Sayfa Konumu">
+  <div class="container">
+    <ol>
+      <li><a href="/">Ana Sayfa</a></li>
+      <li aria-current="page">Arama: {{ query }}</li>
+    </ol>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="search-page">
+  <div class="container">
+
+    <h1 style="font-size:22px;font-weight:800;margin-bottom:18px;">Haber Ara</h1>
+
+    <form class="search-form-large" action="/arama" method="get" role="search" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
+      <div style="display: flex; gap: 10px;">
+        <label for="search-q" class="sr-only">Arama terimi</label>
+        <input
+          id="search-q"
+          class="search-input-large"
+          type="search"
+          name="q"
+          value="{{ query }}"
+          placeholder="Haber, konu veya ilçe ara..."
+          autocomplete="off"
+          style="flex: 1; padding: 12px; border: 1px solid var(--color-border); border-radius: 6px;"
+        >
+        <button class="search-btn-large" type="submit" style="padding: 12px 24px; background: var(--color-primary); color: white; border: none; border-radius: 6px; cursor: pointer;">🔍 Ara</button>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 200px;">
+          <label for="category_id" style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600;">Kategori</label>
+          <select name="category_id" id="category_id" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: 6px;">
+            <option value="">Tüm Kategoriler</option>
+            {% for cat in all_categories %}
+            <option value="{{ cat.id }}" {% if category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+          <label for="start_date" style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600;">Başlangıç Tarihi</label>
+          <input type="date" name="start_date" id="start_date" value="{{ start_date or '' }}" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: 6px;">
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+          <label for="end_date" style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600;">Bitiş Tarihi</label>
+          <input type="date" name="end_date" id="end_date" value="{{ end_date or '' }}" style="width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: 6px;">
+        </div>
+      </div>
+    </form>
+
+    {% if query %}
+    <p class="search-results-info">
+      <strong>"{{ query }}"</strong> araması için 
+      <strong>{{ total }}</strong> sonuç bulundu.
+    </p>
+
+    {% if articles %}
+    <div class="news-grid-3" style="margin-bottom:28px;">
+      {% for article in articles %}
+      <div class="news-card">
+        <div class="news-card-img">
+          <img src="{{ article.featured_image if (article.featured_image and article.featured_image != 'None') else '/static/images/news-placeholder.jpg' }}" alt="{{ article.title }}" loading="lazy" style="object-fit: cover; aspect-ratio: 16/9; width: 100%; height: 100%;">
+        </div>
+        <div class="news-card-body">
+          <div class="news-card-meta">
+            {% if article.is_breaking %}<span class="breaking-badge">Son Dakika</span>{% endif %}
+            <span class="news-time" data-time="{{ article.published_at }}"></span>
+          </div>
+          <h2 class="news-card-title">
+            <a href="/haber/{{ article.slug }}">{{ article.title }}</a>
+          </h2>
+          {% if article.excerpt %}
+          <p class="news-card-excerpt">{{ article.excerpt | striptags | truncate(120) }}</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {# Pagination #}
+    {% if pages > 1 %}
+    {% set query_params = "q=" + query + "&category_id=" + (category_id|string if category_id else "") + "&start_date=" + (start_date if start_date else "") + "&end_date=" + (end_date if end_date else "") %}
+    <nav class="pagination" aria-label="Sayfa Navigasyonu">
+      {% if page > 1 %}
+      <a href="?{{ query_params }}&sayfa={{ page - 1 }}" class="page-btn">‹</a>
+      {% else %}
+      <span class="page-btn disabled">‹</span>
+      {% endif %}
+      {% for p in range(1, pages + 1) %}
+      {% if p == page %}
+      <span class="page-btn active">{{ p }}</span>
+      {% elif p == 1 or p == pages or (p >= page - 2 and p <= page + 2) %}
+      <a href="?{{ query_params }}&sayfa={{ p }}" class="page-btn">{{ p }}</a>
+      {% endif %}
+      {% endfor %}
+      {% if page < pages %}
+      <a href="?{{ query_params }}&sayfa={{ page + 1 }}" class="page-btn">›</a>
+      {% else %}
+      <span class="page-btn disabled">›</span>
+      {% endif %}
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state" style="padding:60px 0;">
+      <div class="empty-state-icon">🔍</div>
+      <h2 class="empty-state-title">Sonuç bulunamadı</h2>
+      <p class="empty-state-desc">Belirtilen kriterlere uygun haber bulunamadı. Farklı bir arama deneyin.</p>
+    </div>
+    {% endif %}
+
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

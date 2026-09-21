@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block seo_title %}{{ site_name }} — Balıkesir Son Dakika Haberler{% endblock %}
+{% block meta_description %}Balıkesir ve ilçelerinden son dakika haberleri, güncel gelişmeler, yerel haberler.{% endblock %}
+{% block og_title %}{{ site_name }}{% endblock %}
+{% block og_type %}website{% endblock %}
+
+{% block json_ld %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "{{ site_name }}",
+  "url": "{{ site_url }}",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "{{ site_url }}/arama?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-main">
+  <div class="container">
+
+    {# ─── MANŞET + YAN HABERLER ──────────────────────────────── #}
+    {% if featured_articles or latest_articles %}
+    <div class="main-layout" style="margin-bottom:28px;">
+
+      {# Ana içerik #}
+      <div class="content-area">
+
+        {# ─── MANŞET SLIDER ──────────────────────────────── #}
+        {% if featured_articles %}
+        <div class="hero-slider-wrapper" style="margin-bottom: 28px;">
+          <div class="hero-slider" id="hero-slider">
+            <div class="hero-slides">
+              {% for article in featured_articles[:26] %}
+              <div class="hero-slide {% if loop.index0 == 0 %}active{% endif %}" data-index="{{ loop.index0 }}">
+                <a href="/haber/{{ article.slug }}" class="hero-slide-link">
+                  <img
+                    class="hero-slide-img"
+                    src="{{ article.featured_image if (article.featured_image and article.featured_image != 'None') else '/static/images/news-placeholder.jpg' }}"
+                    alt="{{ (article.featured_image_alt if (article.featured_image_alt and article.featured_image_alt != 'None') else article.title) }}"
+                    loading="{% if loop.index0 == 0 %}eager{% else %}lazy{% endif %}"
+                  >
+                  <div class="hero-slide-overlay">
+                    {% if article.is_breaking %}
+                    <span class="hero-badge breaking">⚡ Son Dakika</span>
+                    {% elif article.category_id %}
+                    <span class="hero-badge">{{ article.source_name or "Manşet" }}</span>
+                    {% endif %}
+                    <h2 class="hero-slide-title">{{ article.title }}</h2>
+                    <div class="hero-slide-meta">
+                      <span>🕐 <span data-time="{{ article.published_at }}"></span></span>
+                      <span>👁 {{ article.view_count }} okunma</span>
+                    </div>
+                  </div>
+                </a>
+              </div>
+              {% endfor %}
+            </div>
+            
+            {# Slider Navigasyon Okları #}
+            <button class="hero-nav-btn prev" aria-label="Önceki" onclick="moveHeroSlider(-1)">❮</button>
+            <button class="hero-nav-btn next" aria-label="Sonraki" onclick="moveHeroSlider(1)">❯</button>
+          </div>
+          
+          {# Slider Numaralı Navigasyon #}
+          <div class="hero-pagination" id="hero-pagination">
+            {% for article in featured_articles[:26] %}
+            <button class="hero-page-num {% if loop.index0 == 0 %}active{% endif %}" onclick="goToHeroSlide({{ loop.index0 }})">{{ loop.index }}</button>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {# ─── SON HABERLER ─────────────────────────────────────── #}
+        {% if latest_articles %}
+        <section class="page-section">
+          <div class="section-header">
+            <h2 class="section-title"><span class="dot"></span>Son Haberler</h2>
+            <a href="/kategori/genel" class="section-link">Tümünü Gör →</a>
+          </div>
+          <div class="news-grid-3">
+            {% for article in latest_articles[:6] %}
+            <div class="news-card">
+              <div class="news-card-img">
+                <img src="{{ article.featured_image if (article.featured_image and article.featured_image != 'None') else '/static/images/news-placeholder.jpg' }}" alt="{{ (article.featured_image_alt if (article.featured_image_alt and article.featured_image_alt != 'None') else article.title) }}" loading="lazy" style="object-fit: cover; aspect-ratio: 16/9; width: 100%; height: 100%;">
+              </div>
+              <div class="news-card-body">
+                <div class="news-card-meta">
+                  {% if article.is_breaking %}<span class="breaking-badge">Son Dakika</span>{% endif %}
+                  <span class="news-time" data-time="{{ article.published_at }}"></span>
+                </div>
+                <h3 class="news-card-title">
+                  <a href="/haber/{{ article.slug }}">{{ article.title }}</a>
+                </h3>
+                {% if article.excerpt %}
+                <p class="news-card-excerpt">{{ article.excerpt | striptags | truncate(120) }}</p>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </section>
+        {% endif %}
+
+        {# ─── HABER ARŞİVİ CTA ──────────────────────────────────────────── #}
+        <section class="archive-cta-section" style="margin-top: 40px; padding: 30px; background: linear-gradient(135deg, var(--color-primary), #b02a36); border-radius: 12px; color: white; text-align: center; box-shadow: var(--shadow-md);">
+          <h2 style="font-size: 26px; margin-bottom: 15px; font-weight: 800;">Tarihin İzlerini Sürmek İster misiniz?</h2>
+          <p style="font-size: 16px; margin-bottom: 25px; opacity: 0.9;">Balıkesir'in geçmişten günümüze tüm haberlerini yıllara, aylara ve kategorilere göre keşfedin. Kapsamlı dijital haber arşivimize göz atın.</p>
+          <a href="/arsiv" style="display: inline-block; background: white; color: var(--color-primary); padding: 12px 30px; font-size: 16px; font-weight: 700; border-radius: 30px; text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+            📚 Haber Arşivine Git
+          </a>
+        </section>
+
+      </div>{# /content-area #}
+
+      {# ─── SIDEBAR ──────────────────────────────────────────── #}
+      <aside class="sidebar" aria-label="Yan Sütun">
+
+        {# Popüler Haberler #}
+        <div class="widget">
+          <div class="widget-header">🔥 Popüler Haberler</div>
+          <div class="widget-body">
+            {% if popular_articles %}
+            {% for article in popular_articles[:7] %}
+            <div class="popular-item">
+              <span class="popular-num">{{ loop.index }}</span>
+              <div>
+                <div class="popular-title">
+                  <a href="/haber/{{ article.slug }}">{{ article.title }}</a>
+                </div>
+                <div class="popular-time" data-time="{{ article.published_at }}"></div>
+              </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="empty-state" style="padding:24px 0;">
+              <div class="empty-state-icon">📰</div>
+              <p style="font-size:13px;color:#6c757d;">Henüz haber yok.</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        {# Son Dakika Widget #}
+        {% if breaking_articles %}
+        <div class="widget">
+          <div class="widget-header" style="background:#e63946;">⚡ Son Dakika</div>
+          <div class="widget-body" style="padding:0;">
+            {% for article in breaking_articles[:5] %}
+            <div class="news-list-item" style="padding:10px 14px;">
+              <div class="news-list-no-img">⚡</div>
+              <div class="news-list-content">
+                <div class="news-list-title">
+                  <a href="/haber/{{ article.slug }}">{{ article.title }}</a>
+                </div>
+                <div class="news-list-meta" data-time="{{ article.published_at }}"></div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {# İlçeler Hızlı Bağlantı #}
+        <div class="widget">
+          <div class="widget-header">🗺️ İlçeler</div>
+          <div class="widget-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+              {% for ilce in ilceler %}
+              <a href="/kategori/{{ ilce.slug }}" style="
+                display:block;
+                padding:6px 10px;
+                border:1px solid #e9ecef;
+                border-radius:4px;
+                font-size:12px;
+                font-weight:600;
+                color:#495057;
+                text-align:center;
+                transition:all 0.18s;
+              " onmouseover="this.style.background='#c1121f';this.style.color='white';" onmouseout="this.style.background='';this.style.color='#495057';">
+                {{ ilce.name }}
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+      </aside>{# /sidebar #}
+
+    </div>
+    {% endif %}
+
+    {# ─── BALIKESİR HABERLERİ ──────────────────────────────── #}
+    {% if balikesir_articles %}
+    <section class="page-section">
+      <div class="section-header">
+        <h2 class="section-title"><span class="dot"></span>Balıkesir Haberleri</h2>
+        <a href="/kategori/balikesir" class="section-link">Tümünü Gör →</a>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;">
+        <div class="news-grid-2">
+          {% for article in balikesir_articles[:4] %}
+          <div class="news-card">
+            <div class="news-card-img">
+              <img src="{{ article.featured_image if (article.featured_image and article.featured_image != 'None') else '/static/images/news-placeholder.jpg' }}" alt="{{ article.title }}" loading="lazy" style="object-fit: cover; aspect-ratio: 16/9; width: 100%; height: 100%;">
+            </div>
+            <div class="news-card-body">
+              <div class="news-card-meta">
+                <span class="news-time" data-time="{{ article.published_at }}"></span>
+              </div>
+              <h3 class="news-card-title">
+                <a href="/haber/{{ article.slug }}">{{ article.title }}</a>
+              </h3>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <div>
+          {% for article in balikesir_articles[4:9] %}
+          <div class="news-list-item">
+            <div class="news-list-no-img">📍</div>
+            <div class="news-list-content">
+              <div class="news-list-title">
+                <a href="/haber/{{ article.slug }}">{{ article.title }}</a>
+              </div>
+              <div class="news-list-meta" data-time="{{ article.published_at }}"></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    {# ─── KATEGORİ SEKSİYONLARI ──────────────────────────────── #}
+    {% for section in category_sections %}
+    {% if section.articles %}
+    <section class="page-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="dot" style="background:{{ section.color }};"></span>
+          {{ section.name }}
+        </h2>
+        <a href="/kategori/{{ section.slug }}" class="section-link">Tümünü Gör →</a>
+      </div>
+      <div class="news-grid-4">
+        {% for article in section.articles[:4] %}
+        <div class="news-card">
+          <div class="news-card-img">
+            <img src="{{ article.featured_image if (article.featured_image and article.featured_image != 'None') else '/static/images/news-placeholder.jpg' }}" alt="{{ article.title }}" loading="lazy" style="object-fit: cover; aspect-ratio: 16/9; width: 100%; height: 100%;">
+          </div>
+          <div class="news-card-body">
+            <div class="news-card-meta">
+              <span class="category-badge" style="background:{{ section.color }};">{{ section.name }}</span>
+              <span class="news-time" data-time="{{ article.published_at }}"></span>
+            </div>
+            <h3 class="news-card-title">
+              <a href="/haber/{{ article.slug }}">{{ article.title }}</a>
+            </h3>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+    {% endfor %}
+
+    {# Hiç haber yoksa #}
+    {% if not latest_articles and not featured_articles %}
+    <div class="empty-state" style="padding:80px 20px;">
+      <div class="empty-state-icon">📰</div>
+      <h2 class="empty-state-title">Henüz haber yayınlanmamış</h2>
+      <p class="empty-state-desc">Admin panelinden haber ekleyebilirsiniz.</p>
+      <a href="/admin" class="btn btn-primary" style="margin-top:16px;display:inline-flex;">Admin Paneli</a>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

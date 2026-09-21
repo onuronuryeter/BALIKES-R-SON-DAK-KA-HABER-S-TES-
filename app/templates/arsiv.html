@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} | Balıkesir Son Dakika Haber{% endblock %}
+{% block meta_description %}{{ description }}{% endblock %}
+
+{% block content %}
+<div class="category-page-container">
+  <div class="category-header">
+    <div class="category-header-content">
+      <h1 class="category-title" style="color: var(--color-primary);">Haber Arşivi</h1>
+      <p class="category-desc">{{ description }}</p>
+    </div>
+  </div>
+
+  <div class="category-layout">
+    <main class="content-area">
+      
+      {% if archive_type == 'index' %}
+        <div class="archive-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
+          {% for y in years %}
+          <a href="/arsiv/{{ y.year }}" style="display: block; padding: 20px; background: #fff; border: 1px solid var(--color-border); border-radius: 8px; text-align: center; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+            <h2 style="margin: 0; font-size: 28px; color: var(--color-primary);">{{ y.year }}</h2>
+            <p style="margin: 10px 0 0; color: var(--color-text-secondary);">{{ y.count }} Haber</p>
+          </a>
+          {% else %}
+          <p>Henüz haber bulunmuyor.</p>
+          {% endfor %}
+        </div>
+      
+      {% elif archive_type == 'year' %}
+        <div style="margin-bottom: 30px;">
+          <a href="/arsiv" style="color: var(--color-primary); text-decoration: none;">&larr; Tüm Yıllara Dön</a>
+          <h2 style="margin-top: 10px; font-size: 24px; color: var(--color-text);">{{ year }} Yılı Ayları</h2>
+          <div class="archive-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
+            {% for m in months %}
+            <a href="/arsiv/{{ year }}/{{ m.month }}" style="display: block; padding: 15px; background: #f8f9fa; border: 1px solid var(--color-border); border-radius: 6px; text-align: center; text-decoration: none; color: inherit;">
+              <h3 style="margin: 0; font-size: 18px;">{{ m.month }}. Ay</h3>
+              <p style="margin: 5px 0 0; font-size: 13px; color: var(--color-text-secondary);">{{ m.count }} Haber</p>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+
+        <h3 style="margin-bottom: 20px; font-size: 20px; color: var(--color-text);">{{ year }} Yılı Haberleri</h3>
+        <div class="news-grid">
+          {% for article in articles %}
+            {% include "partials/news_card.html" %}
+          {% endfor %}
+        </div>
+
+      {% elif archive_type == 'month' %}
+        <div style="margin-bottom: 30px;">
+          <a href="/arsiv/{{ year }}" style="color: var(--color-primary); text-decoration: none;">&larr; {{ year }} Yılına Dön</a>
+        </div>
+        
+        <div class="news-grid">
+          {% for article in articles %}
+            {% include "partials/news_card.html" %}
+          {% else %}
+          <p>Bu ayda haber bulunmuyor.</p>
+          {% endfor %}
+        </div>
+
+      {% elif archive_type == 'day' %}
+        <div style="margin-bottom: 30px;">
+          <a href="/arsiv/{{ year }}/{{ month }}" style="color: var(--color-primary); text-decoration: none;">&larr; {{ month }}. Aya Dön</a>
+        </div>
+
+        <div class="news-grid">
+          {% for article in articles %}
+            {% include "partials/news_card.html" %}
+          {% else %}
+          <p>Bu günde haber bulunmuyor.</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {# Pagination (index sayfasında yok) #}
+      {% if archive_type != 'index' and pages > 1 %}
+      <nav class="pagination">
+        {% if page > 1 %}
+        <a href="?sayfa={{ page - 1 }}" class="page-link">&laquo; Önceki</a>
+        {% endif %}
+
+        {% for p in range(1, pages + 1) %}
+          {% if p == page %}
+          <span class="page-link active">{{ p }}</span>
+          {% elif p > page - 3 and p < page + 3 %}
+          <a href="?sayfa={{ p }}" class="page-link">{{ p }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page < pages %}
+        <a href="?sayfa={{ page + 1 }}" class="page-link">Sonraki &raquo;</a>
+        {% endif %}
+      </nav>
+      {% endif %}
+
+    </main>
+
+    {# Sidebar #}
+    <aside class="sidebar">
+      <div class="widget search-widget">
+        <h3 class="widget-title">Arşivde Ara</h3>
+        <form action="/arama" method="get" class="search-form">
+          <input type="text" name="q" placeholder="Haberlerde ara..." minlength="2" required>
+          <button type="submit"><i class="fas fa-search"></i></button>
+        </form>
+      </div>
+
+      <div class="widget">
+        <h3 class="widget-title">Arşiv Gezintisi</h3>
+        <ul class="widget-list" style="list-style: none; padding: 0; margin: 0;">
+          <li style="margin-bottom: 10px;"><a href="/arsiv" style="color: var(--color-text); text-decoration: none; display: flex; align-items: center; gap: 8px;"><i class="fas fa-calendar-alt" style="color: var(--color-primary);"></i> Yıllara Göre Arşiv</a></li>
+          <li style="margin-bottom: 10px;"><a href="/arama" style="color: var(--color-text); text-decoration: none; display: flex; align-items: center; gap: 8px;"><i class="fas fa-filter" style="color: var(--color-primary);"></i> Gelişmiş Arama</a></li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}

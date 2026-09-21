@@ -1,0 +1,103 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}📊 Dashboard{% endblock %}
+
+{% block content %}
+
+{# ─── İSTATİSTİK KARTLARI ──────────────────────────────────────── #}
+<div class="admin-stats">
+  <div class="stat-card">
+    <div class="stat-icon red">📰</div>
+    <div>
+      <div class="stat-value">{{ stats.total_articles }}</div>
+      <div class="stat-label">Toplam Haber</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green">✅</div>
+    <div>
+      <div class="stat-value">{{ stats.published_articles }}</div>
+      <div class="stat-label">Yayında</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon orange">⏳</div>
+    <div>
+      <div class="stat-value">{{ stats.pending_articles }}</div>
+      <div class="stat-label">İnceleme Bekleyen</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon blue">📂</div>
+    <div>
+      <div class="stat-value">{{ stats.total_categories }}</div>
+      <div class="stat-label">Kategori</div>
+    </div>
+  </div>
+</div>
+
+{# ─── HIZLI İŞLEMLER ──────────────────────────────────────────── #}
+<div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;">
+  <a href="/admin/articles/new" class="btn btn-primary">✏️ Yeni Haber Yaz</a>
+  <a href="/admin/articles?status=pending_review" class="btn btn-secondary">⏳ Bekleyen Haberler ({{ stats.pending_articles }})</a>
+  <a href="/admin/sources" class="btn btn-secondary">📡 RSS Kaynakları</a>
+  <a href="/admin/categories" class="btn btn-secondary">📂 Kategoriler</a>
+</div>
+
+{# ─── SON HABERLER ─────────────────────────────────────────────── #}
+<div class="admin-table-wrap">
+  <div class="admin-table-header">
+    <span style="font-weight:700;">Son Eklenen Haberler</span>
+    <a href="/admin/articles" class="btn btn-sm btn-secondary">Tümünü Gör →</a>
+  </div>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Başlık</th>
+        <th>Kategori</th>
+        <th>Durum</th>
+        <th>Tarih</th>
+        <th>İşlem</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if recent_articles %}
+      {% for article in recent_articles %}
+      <tr>
+        <td style="max-width:300px;">
+          <div style="font-weight:600;font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+            {{ article.title }}
+          </div>
+          {% if article.is_breaking %}
+          <span class="breaking-badge" style="font-size:9px;padding:1px 6px;margin-top:3px;display:inline-block;">Son Dakika</span>
+          {% endif %}
+        </td>
+        <td style="font-size:12px;">{{ article.source_name or "—" }}</td>
+        <td>
+          <span class="status-badge {{ article.status }}">
+            {% if article.status == 'published' %}Yayında
+            {% elif article.status == 'pending_review' %}İncelemede
+            {% elif article.status == 'draft' %}Taslak
+            {% else %}Arşiv{% endif %}
+          </span>
+        </td>
+        <td style="font-size:12px;white-space:nowrap;" data-time="{{ article.created_at }}">{{ article.created_at }}</td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <a href="/admin/articles/{{ article.id }}/edit" class="btn btn-sm btn-secondary">Düzenle</a>
+            {% if article.status != 'published' %}
+            <button class="btn btn-sm btn-success publish-article-btn" data-id="{{ article.id }}">Yayınla</button>
+            {% endif %}
+            <button class="btn btn-sm btn-danger delete-article-btn" data-id="{{ article.id }}" data-title="{{ article.title }}">Sil</button>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      {% else %}
+      <tr><td colspan="5" style="text-align:center;padding:40px;color:#6c757d;">Henüz haber yok.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

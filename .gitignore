@@ -1,0 +1,73 @@
+# ===================================
+# BALIKESİR SON DAKİKA HABER
+# .gitignore
+# ===================================
+
+# --- Environment ---
+.env
+.env.local
+.env.production
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# --- Virtual Environment ---
+venv/
+env/
+.venv/
+ENV/
+.env/
+
+# --- Database ---
+data/database.sqlite3
+data/database.sqlite3-shm
+data/database.sqlite3-wal
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Media Uploads ---
+data/media/*
+!data/media/districts/
+!data/media/.gitkeep
+
+# --- Logs ---
+logs/
+*.log
+
+# --- Alembic ---
+alembic/versions/*.py
+!alembic/versions/.gitkeep
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Testing ---
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# --- Node (eğer kullanılırsa) ---
+node_modules/
+npm-debug.log*

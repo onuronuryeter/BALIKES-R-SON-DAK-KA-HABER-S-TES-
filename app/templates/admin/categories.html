@@ -1,0 +1,52 @@
+{% extends "admin/base.html" %}
+{% block title %}Kategoriler{% endblock %}
+{% block page_title %}📂 Kategoriler{% endblock %}
+
+{% block content %}
+<div class="admin-table-wrap">
+  <div class="admin-table-header">
+    <span>Toplam: <strong>{{ categories | length }}</strong> kategori</span>
+  </div>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Ad</th>
+        <th>Slug</th>
+        <th>Üst Kategori</th>
+        <th>Sıra</th>
+        <th>Renk</th>
+        <th>Nav</th>
+        <th>Durum</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cat in categories %}
+      <tr>
+        <td style="color:#adb5bd;font-size:12px;">{{ cat.id }}</td>
+        <td style="font-weight:600;">
+          {{ "└ " if cat.parent_id else "" }}{{ cat.name }}
+        </td>
+        <td style="font-size:12px;color:#6c757d;">{{ cat.slug }}</td>
+        <td style="font-size:12px;">{{ cat.parent_id or "—" }}</td>
+        <td style="font-size:12px;">{{ cat.order }}</td>
+        <td>
+          {% if cat.color %}
+          <span style="display:inline-block;width:16px;height:16px;background:{{ cat.color }};border-radius:3px;vertical-align:middle;"></span>
+          {{ cat.color }}
+          {% else %}—{% endif %}
+        </td>
+        <td>
+          {% if cat.show_in_nav %}<span class="status-badge published">Evet</span>
+          {% else %}<span class="status-badge draft">Hayır</span>{% endif %}
+        </td>
+        <td>
+          {% if cat.is_active %}<span class="status-badge published">Aktif</span>
+          {% else %}<span class="status-badge archived">Pasif</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  {# ─── SEO Meta ────────────────────────────────────────────── #}
+  <title>{% block seo_title %}{{ site_name }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{{ site_description }}{% endblock %}">
+  <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
+  <link rel="canonical" href="{% block canonical %}{{ site_url }}{{ request.url.path }}{% endblock %}">
+
+  {# ─── Open Graph ──────────────────────────────────────────── #}
+  <meta property="og:site_name" content="{{ site_name }}">
+  <meta property="og:title" content="{% block og_title %}{{ site_name }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ site_description }}{% endblock %}">
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+  <meta property="og:url" content="{{ site_url }}{{ request.url.path }}">
+  <meta property="og:image" content="{% block og_image %}{{ site_url }}/static/images/og-default.jpg{% endblock %}">
+  <meta property="og:locale" content="tr_TR">
+
+  {# ─── Twitter Card ────────────────────────────────────────── #}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% block twitter_title %}{{ site_name }}{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}{{ site_description }}{% endblock %}">
+  <meta name="twitter:image" content="{% block twitter_image %}{{ site_url }}/static/images/og-default.jpg{% endblock %}">
+
+  {# ─── JSON-LD ─────────────────────────────────────────────── #}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "NewsMediaOrganization",
+    "name": "{{ site_name }}",
+    "url": "{{ site_url }}",
+    "description": "{{ site_description }}",
+    "foundingLocation": {
+      "@type": "Place",
+      "name": "Balıkesir, Türkiye"
+    }
+  }
+  </script>
+  {% block json_ld %}{% endblock %}
+
+  {# ─── CSS ─────────────────────────────────────────────────── #}
+  <link rel="stylesheet" href="/static/css/style.css?v=3.1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+  <link rel="stylesheet" href="/static/css/market.css">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{# ─── TOP BAR ─────────────────────────────────────────────────── #}
+<div class="top-bar">
+  <div class="container">
+    <span class="top-bar-date" id="current-datetime">{{ now if now else "" }}</span>
+    <span>{{ site_name }} — Balıkesir'in Haber Merkezi</span>
+  </div>
+</div>
+
+{# ─── PİYASA TAKİP ────────────────────────────────────────────── #}
+<div id="market-ticker" class="market-ticker">
+  <div class="container">
+    <div class="market-ticker-inner">
+      <div id="market-data" class="market-data-container">
+        <!-- JS ile doldurulacak -->
+      </div>
+      <div class="market-meta">
+        <span class="market-update-label">Son güncelleme: <span id="market-update-time">--:--</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ─── HEADER ──────────────────────────────────────────────────── #}
+<header class="site-header">
+  <div class="header-top-red">
+    <div class="container">
+      <div class="header-inner">
+        <a href="/" class="site-logo" aria-label="{{ site_name }} Ana Sayfa">
+          <span>BALIKESİR</span>
+          <span style="color: #fff;">&nbsp;SON DAKİKA</span>
+        </a>
+
+        <nav class="main-nav" aria-label="Ana Navigasyon">
+          <ul class="nav-list" role="list">
+            {% for cat in top_nav_categories %}
+            <li class="nav-item {% if active_category == cat.slug %}active{% endif %}">
+              <a href="/kategori/{{ cat.slug }}">{{ cat.name|upper }}</a>
+            </li>
+            {% endfor %}
+            <li class="nav-item has-dropdown {% if active_category in ilceler|map(attribute='slug') %}active{% endif %}">
+              <a href="#">YEREL</a>
+              <ul class="dropdown-menu">
+                {% for ilce in ilceler %}
+                <li><a href="/kategori/{{ ilce.slug }}">{{ ilce.name }}</a></li>
+                {% endfor %}
+              </ul>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="header-actions">
+          <form class="search-form" action="/arama" method="get" role="search">
+            <input
+              class="search-input"
+              type="search"
+              name="q"
+              placeholder="Ara"
+              value="{{ search_query if search_query else '' }}"
+              autocomplete="off"
+            >
+            <button class="search-btn" type="submit" aria-label="Ara">🔍</button>
+          </form>
+          {% if current_user %}
+            <span style="color:white; font-size:13px; font-weight:600; margin-right: 15px;">{{ current_user.full_name }}</span>
+            <a href="/cikis-yap" class="login-btn">Çıkış Yap</a>
+          {% else %}
+            <a href="/giris-yap" class="login-btn">Giriş Yap</a>
+            <a href="/kayit-ol" class="login-btn" style="background:var(--color-primary); color:white; margin-left: 10px;">Kayıt Ol</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="header-sub-black">
+    <div class="container">
+      <nav class="sub-nav" aria-label="Alt Navigasyon">
+        <ul class="sub-nav-list" role="list">
+          {% for cat in sub_nav_categories %}
+          <li class="sub-nav-item {% if active_category == cat.slug %}active{% endif %}">
+            <a href="/kategori/{{ cat.slug }}">{{ cat.name }}</a>
+          </li>
+          {% endfor %}
+        </ul>
+      </nav>
+    </div>
+  </div>
+</header>
+
+{# ─── SON DAKİKA TICKER ───────────────────────────────────────── #}
+{% if breaking_news %}
+<div class="breaking-ticker" aria-label="Son Dakika Haberleri">
+  <div class="container">
+    <div class="ticker-inner">
+      <span class="ticker-label">⚡ Son Dakika</span>
+      <div class="ticker-track">
+        <div class="ticker-content" aria-live="polite">
+          {% for article in breaking_news %}
+          <span class="ticker-item">
+            <a href="/haber/{{ article.slug }}">{{ article.title }}</a>
+          </span>
+          {% endfor %}
+          {# Clone for infinite scroll — JS tarafından yapılır #}
+          {% for article in breaking_news %}
+          <span class="ticker-item" aria-hidden="true">
+            <a href="/haber/{{ article.slug }}" tabindex="-1">{{ article.title }}</a>
+          </span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ─── BREADCRUMB ───────────────────────────────────────────────── #}
+{% block breadcrumb %}{% endblock %}
+
+{# ─── ANA İÇERİK ──────────────────────────────────────────────── #}
+<main id="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+{# ─── FOOTER ──────────────────────────────────────────────────── #}
+<footer class="site-footer" role="contentinfo">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo">BALIKESİR <span>SON DAKİKA</span></div>
+        <p class="footer-desc">Balıkesir ve ilçelerinden son dakika haberleri, güncel gelişmeler, yerel haberler.</p>
+      </div>
+      <div>
+        <h3 class="footer-heading">Kategoriler</h3>
+        <nav class="footer-links" aria-label="Kategori Navigasyonu">
+          {% for cat in top_nav_categories[:6] %}
+          <a href="/kategori/{{ cat.slug }}">{{ cat.name }}</a>
+          {% endfor %}
+        </nav>
+      </div>
+      <div>
+        <h3 class="footer-heading">İlçeler</h3>
+        <nav class="footer-links" aria-label="İlçe Navigasyonu">
+          <a href="/kategori/karesi">Karesi</a>
+          <a href="/kategori/altieylul">Altıeylül</a>
+          <a href="/kategori/bandirma">Bandırma</a>
+          <a href="/kategori/edremit">Edremit</a>
+          <a href="/kategori/ayvalik">Ayvalık</a>
+          <a href="/kategori/burhaniye">Burhaniye</a>
+        </nav>
+      </div>
+      <div>
+        <h3 class="footer-heading">Kurumsal</h3>
+        <nav class="footer-links" aria-label="Kurumsal Navigasyon">
+          <a href="/hakkimizda">Hakkımızda</a>
+          <a href="/iletisim">İletişim</a>
+          <a href="/gizlilik">Gizlilik Politikası</a>
+          <a href="/sitemap.xml">Site Haritası</a>
+          <a href="/rss">RSS Feed</a>
+          <a href="/admin">Admin</a>
+        </nav>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© {{ current_year }} {{ site_name }}. Tüm hakları saklıdır. |
+        <a href="/robots.txt" style="color:inherit">robots.txt</a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+{# ─── JavaScript ───────────────────────────────────────────────── #}
+<script src="/static/js/main.js?v=3.0" defer></script>
+<script src="/static/js/market.js?v=1.1" defer></script>
+
+{% if current_user %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if ("Notification" in window) {
+        // SSE Bağlantısı (sadece izin verildiyse veya varsayılan durumdaysa)
+        const eventSource = new EventSource("/api/stream/notifications");
+        
+        eventSource.onmessage = function(event) {
+            if (event.data !== "ping") {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (Notification.permission === "granted") {
+                        const notification = new Notification("Balıkesir Son Dakika - Yeni Haber!", {
+                            body: data.title,
+                            icon: "/static/images/favicon.ico"
+                        });
+                        notification.onclick = function() {
+                            window.open(data.url, "_blank");
+                            notification.close();
+                        };
+                    }
+                } catch (e) {
+                    console.error("SSE JSON Parse Error:", e);
+                }
+            }
+        };
+    }
+});
+</script>
+{% endif %}
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

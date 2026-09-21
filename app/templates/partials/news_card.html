@@ -1,0 +1,21 @@
+{% if article.featured_image and article.featured_image != 'None' %}
+  {% set card_img = article.featured_image %}
+{% else %}
+  {% set card_img = '/static/images/news-placeholder.jpg' %}
+{% endif %}
+<div class="news-card">
+  <div class="news-card-img">
+    <a href="/haber/{{ article.slug }}">
+      <img src="{{ card_img }}" alt="{{ article.title }}" loading="lazy" style="object-fit:cover;aspect-ratio:16/9;width:100%;height:100%;">
+    </a>
+  </div>
+  <div class="news-card-body">
+    <div class="news-card-meta">
+      {% if article.is_breaking %}<span class="breaking-badge">Son Dakika</span>{% endif %}
+      <span class="news-time" data-time="{{ article.published_at }}"></span>
+    </div>
+    <h3 class="news-card-title">
+      <a href="/haber/{{ article.slug }}">{{ article.title }}</a>
+    </h3>
+  </div>
+</div>
