@@ -54,4 +54,3 @@ google-genai==0.3.0
 
 # --- AI SDK ---
 openai>=1.0.0
-a2wsgi==1.0.7
