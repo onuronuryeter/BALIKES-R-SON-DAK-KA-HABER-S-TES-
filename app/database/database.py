@@ -81,6 +81,49 @@ async def get_db() -> AsyncSession:
 
 # ─── Init Tables ────────────────────────────────────────────────────────────────
 
+async def seed_db(session):
+    from app.database.models import User, SiteSetting
+    from app.api.auth import get_password_hash
+    from app.config.settings import settings
+    from sqlalchemy import select
+
+    # Admin oluştur
+    result = await session.execute(select(User).where(User.username == settings.ADMIN_USERNAME))
+    admin = result.scalar_one_or_none()
+    if not admin:
+        admin = User(
+            username=settings.ADMIN_USERNAME,
+            email=settings.ADMIN_EMAIL,
+            hashed_password=get_password_hash(settings.ADMIN_PASSWORD),
+            full_name="Sistem Yöneticisi",
+            is_active=True,
+            is_admin=True,
+            is_superadmin=True,
+        )
+        session.add(admin)
+        logger.info(f"✅ Admin otomatik eklendi: '{settings.ADMIN_USERNAME}'")
+
+    # Ayarları oluştur
+    defaults = [
+        {"key": "site_name", "value": settings.SITE_NAME, "label": "Site Adı", "setting_type": "text", "is_public": True},
+        {"key": "site_description", "value": settings.SITE_DESCRIPTION, "label": "Site Açıklaması", "setting_type": "text", "is_public": True},
+        {"key": "site_url", "value": settings.SITE_URL, "label": "Site URL", "setting_type": "text", "is_public": True},
+        {"key": "articles_per_page", "value": "20", "label": "Sayfa Başına Haber", "setting_type": "text", "is_public": True},
+        {"key": "breaking_news_enabled", "value": "true", "label": "Son Dakika Bandı Aktif", "setting_type": "bool", "is_public": True},
+        {"key": "contact_email", "value": settings.ADMIN_EMAIL, "label": "İletişim E-postası", "setting_type": "text", "is_public": True},
+        {"key": "footer_text", "value": f"© 2024 {settings.SITE_NAME}. Tüm hakları saklıdır.", "label": "Footer Metni", "setting_type": "text", "is_public": True},
+    ]
+
+    for setting_data in defaults:
+        result = await session.execute(select(SiteSetting).where(SiteSetting.key == setting_data["key"]))
+        existing = result.scalar_one_or_none()
+        if not existing:
+            setting = SiteSetting(**setting_data)
+            session.add(setting)
+
+    await session.commit()
+
+
 async def init_db():
     """
     Uygulama başlangıcında tabloları oluşturur.
@@ -92,6 +135,10 @@ async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("✅ Veritabanı tabloları hazır.")
+
+    # Tohum verilerini (admin vb.) ekle
+    async with AsyncSessionLocal() as session:
+        await seed_db(session)
 
 
 async def drop_all_tables():
