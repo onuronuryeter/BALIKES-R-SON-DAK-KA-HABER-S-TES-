@@ -180,7 +180,15 @@ async def process_and_save_article(db: AsyncSession, source: Source, item: Dict[
         clean_summary = re.sub(r'<[^>]+>', '', final_summary)
         final_meta_desc = generate_fallback_meta_description(clean_summary or final_content)
         
-    final_slug = generate_slug(final_title)
+    base_slug = generate_slug(final_title)
+    final_slug = base_slug
+    counter = 1
+    while True:
+        existing = await db.execute(select(Article.id).where(Article.slug == final_slug))
+        if not existing.scalar_one_or_none():
+            break
+        final_slug = f"{base_slug}-{counter}"
+        counter += 1
     
     # Kategori Bulma Önceliği
     category_id = None
