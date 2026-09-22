@@ -42,6 +42,19 @@
   </script>
   {% block json_ld %}{% endblock %}
 
+  {# ─── Google Publisher / Reader Revenue Manager ─────────────── #}
+  <script async type="application/javascript" src="https://news.google.com/swg/js/v1/swg-basic.js"></script>
+  <script>
+    (self.SWG_BASIC = self.SWG_BASIC || []).push( basicSubscriptions => {
+      basicSubscriptions.init({
+        type: "NewsArticle",
+        isPartOfType: ["Product"],
+        isPartOfProductId: "CAow16_NDA:openaccess",
+        clientOptions: { theme: "light", lang: "tr" },
+      });
+    });
+  </script>
+
   {# ─── CSS ─────────────────────────────────────────────────── #}
   <link rel="stylesheet" href="/static/css/style.css?v=3.2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
