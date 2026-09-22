@@ -191,6 +191,7 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 
 /* ─── ARAMA VE GİRİŞ ─────────────────────────────────────────── */
 .header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.mobile-menu-btn { display: none; border: none; cursor: pointer; }
 .search-form { display: flex; align-items: center; background: white; border-radius: 20px; overflow: hidden; padding: 2px 5px; }
 .search-input {
   border: none;
@@ -1242,8 +1243,34 @@ select.form-control { cursor: pointer; }
   .article-layout { grid-template-columns: 1fr; }
   .news-grid-4, .news-grid-3 { grid-template-columns: repeat(2, 1fr); }
   .footer-grid { grid-template-columns: 1fr; }
-  .nav-list { display: none; }
-  .search-input { width: 140px; }
+  
+  /* Mobil Menü (Hamburger) CSS */
+  .mobile-menu-btn { display: flex; color: white; background: transparent; padding: 4px; }
+  .main-nav {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    background: var(--color-primary-dark);
+    display: none;
+    padding: 10px 0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  .main-nav.active { display: block; }
+  .nav-list {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0 16px;
+  }
+  .nav-item a { border-radius: 0; padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .nav-item:last-child a { border-bottom: none; }
+  .nav-item.has-dropdown .dropdown-menu { position: static; box-shadow: none; background: rgba(0,0,0,0.2); }
+  .nav-item.has-dropdown .dropdown-menu li a { color: white; padding: 8px 24px; }
+  .nav-item.has-dropdown .dropdown-menu li a:hover { background: rgba(0,0,0,0.3); color: white; }
+  
+  .header-actions .login-btn { display: none; } /* Mobilde butonu gizleyip sadece ikonu bırakabiliriz veya menü içine taşıyabiliriz. Şimdilik gizleyelim, alan darlığı olmasın. */
+  .search-input { width: 120px; }
+  
   .admin-sidebar { transform: translateX(-100%); }
   .admin-content { margin-left: 0; }
   .admin-stats { grid-template-columns: 1fr 1fr; }

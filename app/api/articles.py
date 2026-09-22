@@ -20,6 +20,8 @@ from app.database.database import get_db
 from app.database.models import Article, Category, User, ArticleStatus
 from app.api.auth import require_admin
 from app.services.gatekeeper_service import image_gate_service
+from app.services.push_service import broadcast_push_notification
+import asyncio
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -417,6 +419,14 @@ async def create_article(
     db.add(article)
     await db.commit()
     await db.refresh(article)
+    
+    if is_pub:
+        asyncio.create_task(broadcast_push_notification(
+            title="Yeni Haber: " + article.title,
+            body=article.excerpt or "Balıkesir'den son dakika gelişmesi...",
+            url=f"/haber/{article.slug}"
+        ))
+        
     return article
 
 
@@ -480,8 +490,17 @@ async def update_article(
     for field, value in update_data.items():
         setattr(article, field, value)
 
+    was_published = article.is_published
     await db.commit()
     await db.refresh(article)
+    
+    if update_data.get("status") == ArticleStatus.PUBLISHED.value and not was_published:
+        asyncio.create_task(broadcast_push_notification(
+            title="Yeni Haber: " + article.title,
+            body=article.excerpt or "Balıkesir'den son dakika gelişmesi...",
+            url=f"/haber/{article.slug}"
+        ))
+        
     return article
 
 
@@ -527,6 +546,13 @@ async def publish_article(
 
     await db.commit()
     await db.refresh(article)
+    
+    asyncio.create_task(broadcast_push_notification(
+        title="Yeni Haber: " + article.title,
+        body=article.excerpt or "Balıkesir'den son dakika gelişmesi...",
+        url=f"/haber/{article.slug}"
+    ))
+    
     return article
 
 # ─── PUSH API (INTERNAL) ───────────────────────────────────────────────────────
@@ -581,6 +607,12 @@ async def internal_push_article(
     
     db.add(new_article)
     await db.commit()
+    
+    asyncio.create_task(broadcast_push_notification(
+        title="Yeni Haber: " + new_article.title,
+        body=new_article.excerpt or "Balıkesir'den son dakika gelişmesi...",
+        url=f"/haber/{new_article.slug}"
+    ))
     
     # Yeni haber geldiğinde ana uygulamaya SSE eventini trigger edebiliriz,
     # frontend'deki stream zaten DB'den yeni article çekiyor, yani doğrudan düşecektir.

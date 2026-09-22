@@ -101,6 +101,10 @@ class Settings(BaseSettings):
     def upload_dir_path(self) -> Path:
         return BASE_DIR / self.UPLOAD_DIR.lstrip("./")
 
+    VAPID_PUBLIC_KEY: str = ""
+    VAPID_PRIVATE_KEY_PATH: str = "private_key.pem"
+    VAPID_SUBJECT: str = "mailto:admin@balikesirsondakikahaber.com"
+
     model_config = {
         "env_file": str(BASE_DIR / ".env"),
         "env_file_encoding": "utf-8",

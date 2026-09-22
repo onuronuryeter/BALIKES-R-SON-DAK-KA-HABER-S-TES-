@@ -103,10 +103,10 @@
         </nav>
 
         <div class="header-actions">
-          <form class="search-form" action="/arama" method="get" role="search">
-            <input
-              class="search-input"
-              type="search"
+          <form action="/arama" method="get" class="search-form" role="search">
+            <input 
+              type="text" 
+              class="search-input" 
               name="q"
               placeholder="Ara"
               value="{{ search_query if search_query else '' }}"
@@ -114,6 +114,9 @@
             >
             <button class="search-btn" type="submit" aria-label="Ara">🔍</button>
           </form>
+          <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Menüyü Aç/Kapat">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+          </button>
           {% if current_user %}
             <span style="color:white; font-size:13px; font-weight:600; margin-right: 15px;">{{ current_user.full_name }}</span>
             <a href="/cikis-yap" class="login-btn">Çıkış Yap</a>
@@ -169,6 +172,19 @@
 
 {# ─── BREADCRUMB ───────────────────────────────────────────────── #}
 {% block breadcrumb %}{% endblock %}
+
+{# ─── PUSH BANNER ───────────────────────────────────────────────── #}
+<div id="push-banner" class="push-banner" style="display: flex; justify-content: center; align-items: center; background-color: var(--color-primary); color: white; padding: 10px; gap: 15px; position: sticky; top: 0; z-index: 1000; display: none;">
+    <span style="font-weight: 500; font-size: 14px;">Son dakika haberlerini anında almak ister misiniz?</span>
+    <button id="push-subscribe-btn" style="background: white; color: var(--color-primary); border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;">Abone Ol</button>
+    <button id="push-close-btn" style="background: transparent; color: white; border: none; font-size: 18px; cursor: pointer; padding: 0 5px;">&times;</button>
+</div>
+<script>
+    // Show banner only if push is supported and not already handled (the main logic in bottom handles hiding)
+    if ('serviceWorker' in navigator && 'PushManager' in window && Notification.permission !== 'denied' && !localStorage.getItem('push_banner_closed')) {
+        document.getElementById('push-banner').style.display = 'flex';
+    }
+</script>
 
 {# ─── ANA İÇERİK ──────────────────────────────────────────────── #}
 <main id="main-content">
@@ -226,36 +242,95 @@
 <script src="/static/js/main.js?v=3.0" defer></script>
 <script src="/static/js/market.js?v=1.1" defer></script>
 
-{% if current_user %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    if ("Notification" in window) {
-        // SSE Bağlantısı (sadece izin verildiyse veya varsayılan durumdaysa)
-        const eventSource = new EventSource("/api/stream/notifications");
-        
-        eventSource.onmessage = function(event) {
-            if (event.data !== "ping") {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (Notification.permission === "granted") {
-                        const notification = new Notification("Balıkesir Son Dakika - Yeni Haber!", {
-                            body: data.title,
-                            icon: "/static/images/favicon.ico"
-                        });
-                        notification.onclick = function() {
-                            window.open(data.url, "_blank");
-                            notification.close();
-                        };
-                    }
-                } catch (e) {
-                    console.error("SSE JSON Parse Error:", e);
+document.addEventListener('DOMContentLoaded', async function() {
+    // Gerçek Web Push (VAPID) Entegrasyonu
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+            const swReg = await navigator.serviceWorker.register('/sw.js');
+            
+            // Kullanıcı zaten abone mi kontrol et
+            let subscription = await swReg.pushManager.getSubscription();
+            const pushBanner = document.getElementById('push-banner');
+            const pushBtn = document.getElementById('push-subscribe-btn');
+            const pushClose = document.getElementById('push-close-btn');
+            
+            // Kullanıcı bildirimi reddettiyse veya daha önce kapattıysa banner'ı gösterme
+            if (Notification.permission === 'denied' || localStorage.getItem('push_banner_closed')) {
+                if (pushBanner) pushBanner.style.display = 'none';
+            } else if (pushBanner && pushBtn) {
+                if (subscription) {
+                    pushBanner.style.display = 'none'; // Zaten aboneyse butonu gizle
+                } else {
+                    // Kullanıcı kapatırsa hatırlat
+                    pushClose.addEventListener('click', () => {
+                        pushBanner.style.display = 'none';
+                        localStorage.setItem('push_banner_closed', 'true');
+                    });
+
+                    pushBtn.addEventListener('click', async () => {
+                        pushBtn.disabled = true;
+                        pushBtn.innerText = "İzin İsteniyor...";
+                        try {
+                            const response = await fetch('/api/push/public-key');
+                            const data = await response.json();
+                            const publicVapidKey = data.public_key;
+                            
+                            const convertedVapidKey = urlBase64ToUint8Array(publicVapidKey);
+                            
+                            subscription = await swReg.pushManager.subscribe({
+                                userVisibleOnly: true,
+                                applicationServerKey: convertedVapidKey
+                            });
+                            
+                            await fetch('/api/push/subscribe', {
+                                method: 'POST',
+                                body: JSON.stringify(subscription),
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            pushBtn.innerText = "Abone Olundu!";
+                            setTimeout(() => { pushBanner.style.display = 'none'; }, 2000);
+                        } catch (err) {
+                            console.error('Push abonelik hatası: ', err);
+                            pushBtn.innerText = "Hata Oluştu / Reddedildi";
+                            pushBtn.disabled = false;
+                        }
+                    });
                 }
             }
-        };
+        } catch (error) {
+            console.error('Service Worker hatası', error);
+        }
     }
 });
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Mobil Menü Toggle
+const mobileBtn = document.getElementById('mobile-menu-btn');
+const mainNav = document.querySelector('.main-nav');
+if (mobileBtn && mainNav) {
+    mobileBtn.addEventListener('click', () => {
+        mainNav.classList.toggle('active');
+    });
+}
 </script>
-{% endif %}
 
 {% block extra_js %}{% endblock %}
 

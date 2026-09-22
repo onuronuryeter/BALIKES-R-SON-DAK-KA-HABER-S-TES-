@@ -431,3 +431,24 @@ class Comment(Base):
 
     def __repr__(self):
         return f"<Comment(id={self.id}, article_id={self.article_id}, user_id={self.user_id})>"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PUSH SUBSCRIPTION MODELİ
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class PushSubscription(Base):
+    """
+    Kullanıcıların tarayıcı bildirim aboneliklerini (Web Push) tutar.
+    """
+    __tablename__ = "push_subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    endpoint = Column(String(1024), unique=True, nullable=False, index=True)
+    p256dh = Column(String(200), nullable=False)
+    auth = Column(String(100), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+    def __repr__(self):
+        return f"<PushSubscription(id={self.id})>"
+

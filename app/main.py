@@ -120,13 +120,14 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "app" / "templates"))
 
 # ─── API Router'ları ────────────────────────────────────────────────────────────
 
-from app.api import auth, articles, categories, sources, market  # noqa: E402
+from app.api import auth, articles, categories, sources, market, push  # noqa: E402
 
 app.include_router(auth.router,       prefix="/api/auth",       tags=["auth"])
 app.include_router(articles.router,   prefix="/api/articles",   tags=["articles"])
 app.include_router(categories.router, prefix="/api/categories", tags=["categories"])
 app.include_router(sources.router,    prefix="/api/sources",    tags=["sources"])
 app.include_router(market.router,     prefix="/api/market",     tags=["market"])
+app.include_router(push.router,       prefix="/api/push",       tags=["push"])
 
 # ─── Frontend Router ─────────────────────────────────────────────────────────────
 
@@ -141,6 +142,14 @@ async def health_check():
     from app.services.scheduler_service import scheduler
     sch_status = "running" if scheduler.running else "stopped"
     return {"status": "ok", "app": settings.SITE_NAME, "version": settings.APP_VERSION, "scheduler": sch_status}
+
+@app.get("/sw.js", response_class=HTMLResponse)
+async def service_worker():
+    """Service Worker dosyasını root seviyesinde sunar."""
+    sw_path = BASE_DIR / "app" / "static" / "js" / "sw.js"
+    if sw_path.exists():
+        return HTMLResponse(content=sw_path.read_text(encoding="utf-8"), media_type="application/javascript")
+    return HTMLResponse(status_code=404, content="Not found")
 
 
 # ─── Hata Yöneticileri ──────────────────────────────────────────────────────────
