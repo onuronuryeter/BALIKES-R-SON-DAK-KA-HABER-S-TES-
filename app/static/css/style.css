@@ -1239,11 +1239,16 @@ select.form-control { cursor: pointer; }
 }
 
 @media (max-width: 768px) {
+  html, body { overflow-x: hidden; width: 100%; position: relative; }
   .main-layout { grid-template-columns: 1fr; }
   .article-layout { grid-template-columns: 1fr; }
   .news-grid-4, .news-grid-3 { grid-template-columns: repeat(2, 1fr); }
   .footer-grid { grid-template-columns: 1fr; }
   
+  .site-logo { font-size: 16px; letter-spacing: 0; }
+  .header-inner { height: auto; padding: 10px 0; }
+  .header-actions { gap: 5px; }
+
   /* Mobil Menü (Hamburger) CSS */
   .mobile-menu-btn { display: flex; color: white; background: transparent; padding: 4px; }
   .main-nav {
@@ -1268,8 +1273,8 @@ select.form-control { cursor: pointer; }
   .nav-item.has-dropdown .dropdown-menu li a { color: white; padding: 8px 24px; }
   .nav-item.has-dropdown .dropdown-menu li a:hover { background: rgba(0,0,0,0.3); color: white; }
   
-  .header-actions .login-btn { display: none; } /* Mobilde butonu gizleyip sadece ikonu bırakabiliriz veya menü içine taşıyabiliriz. Şimdilik gizleyelim, alan darlığı olmasın. */
-  .search-input { width: 120px; }
+  .header-actions .login-btn { display: none !important; }
+  .search-form { display: none !important; }
   
   .admin-sidebar { transform: translateX(-100%); }
   .admin-content { margin-left: 0; }
