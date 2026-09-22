@@ -571,6 +571,12 @@ async def privacy_page(request: Request, db: AsyncSession = Depends(get_db)):
     ctx = await get_base_context(db, request)
     return templates.TemplateResponse("gizlilik.html", ctx)
 
+@router.get("/kullanim-sartlari", response_class=HTMLResponse)
+async def terms_page(request: Request, db: AsyncSession = Depends(get_db)):
+    """Kullanım Şartları sayfası."""
+    ctx = await get_base_context(db, request)
+    return templates.TemplateResponse("kullanim-sartlari.html", ctx)
+
 
 # ─── SEO: ROBOTS.TXT ─────────────────────────────────────────────────────────
 
