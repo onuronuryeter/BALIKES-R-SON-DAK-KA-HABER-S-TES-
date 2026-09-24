@@ -126,9 +126,10 @@ async def process_and_save_article(db: AsyncSession, source: Source, item: Dict[
         else:
             ai_enrichment_status = "single_source"
 
-        ai_text = await ai_service.generate_news_article(title, multi_source_text, source.name)
+        ai_result = await ai_service.generate_news_article(title, multi_source_text, source.name)
         
-        if ai_text:
+        if ai_result and ai_result.get("content"):
+            ai_text = ai_result["content"]
             ai_text_lower = ai_text.lower()
             is_valid = True
             
@@ -155,11 +156,18 @@ async def process_and_save_article(db: AsyncSession, source: Source, item: Dict[
                 clean_ai_text = clean_ai_text.replace('* ', '• ')
                 
                 final_content = clean_ai_text
-                first_p = re.search(r'<p>(.*?)</p>', clean_ai_text)
-                if first_p:
-                    final_summary = first_p.group(1)[:500]
+                
+                if ai_result.get("title"):
+                    final_title = ai_result["title"]
+                    
+                if ai_result.get("excerpt"):
+                    final_summary = ai_result["excerpt"]
                 else:
-                    final_summary = clean_ai_text[:500]
+                    first_p = re.search(r'<p>(.*?)</p>', clean_ai_text)
+                    if first_p:
+                        final_summary = first_p.group(1)[:500]
+                    else:
+                        final_summary = clean_ai_text[:500]
                 
                 is_ai_generated = True
                 ai_processed = True

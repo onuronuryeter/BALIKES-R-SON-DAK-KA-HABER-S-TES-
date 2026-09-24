@@ -50,22 +50,8 @@ class AIService:
         return True
 
     def _get_system_prompt(self) -> str:
-        return (
-            "SEN PROFESYONEL BİR TÜRKÇE HABER EDİTÖRÜSÜN.\n"
-            "Görevin, sana verilen kaynak metni kullanarak KAPSAMLI, DETAYLI ve YAPI OLARAK ZENGİN bir haber makalesi yazmaktır.\n\n"
-            "YAZIM VE YAPI KURALLARI:\n"
-            "1. Metin mutlaka doyurucu bir Giriş (Lead), bağlamın anlatıldığı detaylı Gelişme ve toparlayıcı Sonuç paragraflarından oluşmalıdır.\n"
-            "2. Okunabilirliği artırmak için konuyu bölümlere ayır ve aralara Markdown alt başlıkları (`### Alt Başlık` formatında) ekle.\n"
-            "3. Cümleleri kısa kesmek yerine, gazetecilik terimleriyle zenginleştirilmiş, akıcı ve profesyonel bir üslup kullan.\n"
-            "4. Olayın 'Ne, Nerede, Ne Zaman, Nasıl, Kim ve Neden' (5N1K) detaylarını (kaynakta bulunduğu kadarıyla) derinlemesine vurgula.\n"
-            "5. Hedefin okuyucuyu tam olarak aydınlatacak, en az 4-5 detaylı paragraftan oluşan uzun bir makale üretmektir.\n\n"
-            "GÜVENLİK VE DOĞRULUK KURALLARI (ÇOK KRİTİK!):\n"
-            "- UZUN HABER ÜRETMEK UĞRUNA ASLA BİLGİ UYDURMA!\n"
-            "- Yalnızca verilen kaynakta geçen gerçekleri kullan.\n"
-            "- Hayali isim, alıntı, açıklama, rakam, tarih veya kurum eklemek KESİNLİKLE YASAKTIR.\n"
-            "- Kaynak metni birebir (kopyala-yapıştır) kullanmak yerine, kendi özgün ve profesyonel ifadelerinle yeniden kurgula.\n"
-            "- Habere kişisel görüş veya yorum katma, tamamen tarafsız ol.\n"
-        )
+        from app.services.ai_prompt import PROFESSIONAL_NEWS_EDITOR_PROMPT
+        return PROFESSIONAL_NEWS_EDITOR_PROMPT
 
     async def _execute_request(self, title: str, source_text: str, source_name: Optional[str], is_stream: bool) -> Optional[str]:
         user_content = f"BAŞLIK:\n{title}\n\n"
@@ -177,7 +163,7 @@ class AIService:
         title: str,
         source_text: str,
         source_name: Optional[str] = None
-    ) -> Optional[str]:
+    ) -> Optional[dict]:
         if not self.is_enabled():
             return None
 
@@ -195,19 +181,65 @@ class AIService:
                 content = await self._execute_request(title, source_text, source_name, is_stream)
                 
                 if content:
-                    # Temizlik
-                    if content.lower().startswith("haber:") or content.lower().startswith("işte haber"):
-                        lines = content.split('\n')
-                        if len(lines) > 1:
-                            content = "\n".join(lines[1:]).strip()
+                    import re
+                    result = {
+                        "title": None,
+                        "excerpt": None,
+                        "content": None,
+                        "is_valid": False,
+                        "reason": None,
+                        "raw_output": content
+                    }
 
-                    if "<p>" not in content:
-                        paragraphs = [f"<p>{p.strip()}</p>" for p in content.split('\n\n') if p.strip()]
-                        content = "\n".join(paragraphs)
+                    title_match = re.search(r'BAŞLIK:\s*(.*?)\n+SPOT:', content, re.DOTALL)
+                    if title_match:
+                        result["title"] = title_match.group(1).strip()
 
-                    word_count = len(content.split())
-                    logger.info(f"[NEMOTRON] Article generated: {word_count} words (Stream: {is_stream})")
-                    return content
+                    spot_match = re.search(r'SPOT:\s*(.*?)\n+HABER:', content, re.DOTALL)
+                    if spot_match:
+                        result["excerpt"] = spot_match.group(1).strip()
+
+                    haber_match = re.search(r'HABER:\s*(.*?)\n+(?:KAYNAK:|EDİTORYAL KONTROL:)', content, re.DOTALL)
+                    if haber_match:
+                        # Haber metnini paragraflara böl (eğer HTML etiketi yoksa)
+                        raw_haber = haber_match.group(1).strip()
+                        if "<p>" not in raw_haber:
+                            paragraphs = [f"<p>{p.strip()}</p>" for p in raw_haber.split('\n\n') if p.strip()]
+                            result["content"] = "\n".join(paragraphs)
+                        else:
+                            result["content"] = raw_haber
+                    else:
+                        # Eğer HABER bloğu tam bulunamazsa tüm metni içerik yap
+                        if "<p>" not in content:
+                            paragraphs = [f"<p>{p.strip()}</p>" for p in content.split('\n\n') if p.strip()]
+                            result["content"] = "\n".join(paragraphs)
+                        else:
+                            result["content"] = content
+
+                    yayin_karari = re.search(r'YAYIN KARARI:\s*(.*?)(?:\n|$)', content)
+                    if yayin_karari:
+                        karar = yayin_karari.group(1).strip()
+                        if "YAYINA HAZIR" in karar:
+                            result["is_valid"] = True
+                        else:
+                            result["is_valid"] = False
+
+                    reason_match = re.search(r'GEREKÇE:\s*(.*)', content, re.DOTALL)
+                    if reason_match:
+                        result["reason"] = reason_match.group(1).strip()
+
+                    # Fallback (Eğer yayın kararı veya formatı eksik yazarsa ama içerik varsa yine de kabul et)
+                    if not yayin_karari and result["content"]:
+                        result["is_valid"] = True
+
+                    if result["is_valid"] and result["content"]:
+                        word_count = len(result["content"].split())
+                        logger.info(f"[NEMOTRON] Article parsed. {word_count} words. (Stream: {is_stream})")
+                        return result
+                    else:
+                        logger.warning(f"[NEMOTRON] Validation failed. Reason: {result.get('reason')}")
+                        if attempt == max_attempts:
+                            return None
                 else:
                     logger.error(f"[NEMOTRON] Content was empty on attempt {attempt}")
                     
