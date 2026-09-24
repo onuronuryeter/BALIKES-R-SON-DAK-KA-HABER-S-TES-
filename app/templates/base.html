@@ -11,6 +11,7 @@
   {# ─── SEO Meta ────────────────────────────────────────────── #}
   <title>{% block seo_title %}{{ site_name }}{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}{{ site_description }}{% endblock %}">
+  <meta name="keywords" content="Balıkesir haber, Balıkesir son dakika, Balıkesir yerel haber, Balıkesir gündem, Balıkesir güncel haber, körfez haber, marmara haberleri, sondakika balıkesir, YTR teknoloji, balıkesir web tasarım">
   <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
   <link rel="canonical" href="{% block canonical %}{{ site_url }}{{ request.url.path }}{% endblock %}">
 
@@ -250,6 +251,14 @@
       <p>© {{ current_year }} {{ site_name }}. Tüm hakları saklıdır. |
         <a href="/robots.txt" style="color:inherit">robots.txt</a>
       </p>
+      <div style="font-size: 11px; color: #888; margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
+        <span>Altyapı ve Dijital Çözüm Ortağı: <a href="https://www.ytrteknoloji.com/" target="_blank" title="Balıkesir Web Tasarım ve SEO Ajansı YTR Teknoloji" style="color: #bbb; text-decoration: none; font-weight: 500;">YTR Teknoloji</a></span> |
+        <a href="https://ytrteknoloji.com/hizmetler.html#web" target="_blank" title="Balıkesir Web Tasarım" style="color: #888; text-decoration: none;">Web Tasarım</a> |
+        <a href="https://ytrteknoloji.com/hizmetler.html#seo" target="_blank" title="Balıkesir SEO Hizmeti" style="color: #888; text-decoration: none;">SEO</a> |
+        <a href="https://ytrteknoloji.com/hizmetler.html#eticaret" target="_blank" title="Balıkesir E-Ticaret Paketleri" style="color: #888; text-decoration: none;">E-Ticaret</a> |
+        <a href="https://ytrteknoloji.com/hizmetler.html#mobil" target="_blank" title="Mobil Uygulama Geliştirme" style="color: #888; text-decoration: none;">Mobil Uygulama</a> |
+        <a href="https://ytrteknoloji.com/hizmetler.html#sosyalmedya" target="_blank" title="Sosyal Medya Yönetimi" style="color: #888; text-decoration: none;">Sosyal Medya Yönetimi</a>
+      </div>
     </div>
   </div>
 </footer>
