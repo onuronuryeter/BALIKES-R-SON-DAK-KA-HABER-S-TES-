@@ -279,9 +279,9 @@ async def upload_media(
     _: object = Depends(require_admin)
 ):
     """Admin: Manuel görsel yükle (Kapak & İçerik)"""
-    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"]
+    allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif", "image/avif"]
     if file.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail="Desteklenmeyen dosya formatı")
+        raise HTTPException(status_code=400, detail=f"Desteklenmeyen dosya formatı: {file.content_type}")
     
     # media_service klasörünü kullan
     from app.services.media_service import media_service
@@ -300,9 +300,14 @@ async def upload_media(
     file_path = media_service.upload_dir / filename
     local_url = f"/media/articles/{filename}"
     
-    if not file_path.exists():
-        with open(file_path, "wb") as f:
-            f.write(content)
+    try:
+        if not file_path.exists():
+            with open(file_path, "wb") as f:
+                f.write(content)
+    except PermissionError:
+        raise HTTPException(status_code=500, detail="Sunucuda klasör yazma izni (Permission) hatası var. Lütfen SSH'tan 'sudo chown -R www-data:www-data data/' komutunu çalıştırın.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Dosya kaydedilemedi: {str(e)}")
             
     return {"url": local_url}
 
