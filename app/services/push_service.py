@@ -1,10 +1,11 @@
 import json
 import logging
 import asyncio
+import os
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pywebpush import webpush, WebPushException
-from app.config.settings import settings
+from app.config.settings import settings, BASE_DIR
 from app.database.models import PushSubscription
 from app.database.database import AsyncSessionLocal
 
@@ -39,11 +40,12 @@ async def broadcast_push_notification(title: str, body: str, url: str):
                 }
             }
             # Pywebpush senkron çalışır, asenkron loop'u bloklamamak için asyncio.to_thread kullanıyoruz
+            private_key_path = str(BASE_DIR / settings.VAPID_PRIVATE_KEY_PATH) if not os.path.isabs(settings.VAPID_PRIVATE_KEY_PATH) else settings.VAPID_PRIVATE_KEY_PATH
             await asyncio.to_thread(
                 webpush,
                 subscription_info=sub_info,
                 data=payload,
-                vapid_private_key=settings.VAPID_PRIVATE_KEY_PATH,
+                vapid_private_key=private_key_path,
                 vapid_claims={"sub": settings.VAPID_SUBJECT}
             )
         except WebPushException as ex:

@@ -22,13 +22,22 @@
       "headline": {{ (article.seo_title or article.title) | tojson }},
       "description": {{ (article.seo_description or article.excerpt or "") | tojson }},
       "url": "{{ site_url }}/haber/{{ article.slug }}",
-      "datePublished": "{{ article.published_at }}",
-      "dateModified": "{{ article.updated_at }}",
-      "image": "{{ (article.featured_image if (article.featured_image and article.featured_image != 'None') else (site_url + '/static/images/og-default.jpg')) }}",
-      "publisher": {
+      "datePublished": "{{ article.published_at.isoformat() if article.published_at else '' }}",
+      "dateModified": "{{ article.updated_at.isoformat() if article.updated_at else (article.published_at.isoformat() if article.published_at else '') }}",
+      "image": "{{ (site_url ~ article.featured_image) if (article.featured_image and article.featured_image != 'None' and article.featured_image.startswith('/')) else (article.featured_image if article.featured_image and article.featured_image.startswith('http') else (site_url ~ '/static/images/og-default.jpg')) }}",
+      "author": {
         "@type": "Organization",
         "name": "{{ site_name }}",
         "url": "{{ site_url }}"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "{{ site_name }}",
+        "url": "{{ site_url }}",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "{{ site_url }}/static/images/favicon.jpg"
+        }
       },
       "mainEntityOfPage": {
         "@type": "WebPage",
@@ -41,9 +50,9 @@
         {"@type": "ListItem", "position": 1, "name": "Ana Sayfa", "item": "{{ site_url }}/"},
         {% if category %}
         {"@type": "ListItem", "position": 2, "name": {{ category.name | tojson }}, "item": "{{ site_url }}/kategori/{{ category.slug }}"},
-        {"@type": "ListItem", "position": 3, "name": {{ article.title | tojson }}},
+        {"@type": "ListItem", "position": 3, "name": {{ article.title | tojson }}, "item": "{{ site_url }}/haber/{{ article.slug }}"}
         {% else %}
-        {"@type": "ListItem", "position": 2, "name": {{ article.title | tojson }}}
+        {"@type": "ListItem", "position": 2, "name": {{ article.title | tojson }}, "item": "{{ site_url }}/haber/{{ article.slug }}"}
         {% endif %}
       ]
     }
