@@ -101,35 +101,23 @@ class MediaService:
                 if w < 200 or h < 150:
                     logger.warning(f"Görsel çözünürlüğü çok küçük ({w}x{h}), reddedildi: {url}")
                     return None
-                    
-                # --- TELİF HAKKI BOTLARINI ATLATMAK İÇİN GÖRSEL ÖZGÜNLEŞTİRME ---
-                from PIL import ImageEnhance
-                
-                # 1. RGB'ye çevir (EXIF verilerini ve saydamlığı temizler, orijinal dosyadan koparır)
-                if img.mode != 'RGB':
-                    img = img.convert('RGB')
-                    
-                # 2. Hafifçe kırp (Görsel boyutlarını ve oranlarını değiştirerek Google Images botlarını yanıltır)
-                crop_x = int(w * 0.02)
-                crop_y = int(h * 0.02)
-                img = img.crop((crop_x, crop_y, w - crop_x, h - crop_y))
-                
-                # 3. Kontrast ve renk doygunluğunu hafifçe değiştir (Piksellerin %100'ünü matematiksel olarak değiştirir)
-                img = ImageEnhance.Color(img).enhance(1.05)
-                img = ImageEnhance.Contrast(img).enhance(1.02)
-                
-                # Yeni görseli hafızaya al
-                output_io = io.BytesIO()
-                img.save(output_io, format="WEBP", quality=85)
-                content = output_io.getvalue()
-                # ---------------------------------------------------------------
-                
+                ext = ""
+                if content_type in ALLOWED_MIME_TYPES:
+                    ext = ALLOWED_MIME_TYPES[content_type]
+                else:
+                    # URL uzantısından kurtarmayı dene
+                    if url.lower().endswith((".jpg", ".jpeg")):
+                        ext = ".jpg"
+                    elif url.lower().endswith(".png"):
+                        ext = ".png"
+                    elif url.lower().endswith(".webp"):
+                        ext = ".webp"
+                    else:
+                        ext = ".jpg" # Fallback uzantı
+                        
             except Exception as e:
                 logger.warning(f"Görsel doğrulanamadı (HTML veya bozuk dosya olabilir): {e}")
                 return None
-                
-            # Özgünleştirilmiş görsel her zaman WEBP olarak kaydedilir
-            ext = ".webp"
                 
             # Dosya adını oluştur (İçeriğe göre SHA-256)
             content_hash = hashlib.sha256(content).hexdigest()[:16]

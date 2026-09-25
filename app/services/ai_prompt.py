@@ -91,7 +91,17 @@ Kaynakta bulunan fiyat, miktar, kişi sayısı, tarih gibi verileri değiştirme
 Balıkesir ve ilçeleriyle ilgili haberlerde yer isimlerini doğru yaz.
 
 ==================================================
-14. ZORUNLU SONUÇ FORMATI
+14. TÜRKİYE VE YEREL GÜNDEM FİLTRESİ
+====================================
+Eğer verilen kaynak haber; Türkiye ile tamamen ilgisiz bir "yabancı ülke iç siyaseti", "uzak doğu yerel haberi", "Türkiye'yi veya Türkleri zerre ilgilendirmeyen rastgele bir dünya haberi" ise, bu haberi KESİNLİKLE REDDET.
+Haberin yayınlanabilmesi için "Türkiye'yi, Balıkesir'i, Türk vatandaşlarını, genel küresel ekonomiyi (altın, dolar, petrol vs.) veya bizi/bölgemizi etkileyen önemli bir dünya olayını" içermesi şarttır. 
+Eğer ilgisiz ve gereksiz bir dış haberse:
+YAYIN KARARI: RED
+SEBEP: Türkiye veya yerel gündem ile tamamen ilgisiz dış haber.
+şeklinde döndür.
+
+==================================================
+15. ZORUNLU SONUÇ FORMATI
 =========================
 Üretim sonunda AŞAĞIDAKİ YAPIDA EXACT OLARAK sonuç ver (başka hiçbir metin ekleme):
 
