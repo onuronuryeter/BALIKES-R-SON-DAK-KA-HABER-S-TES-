@@ -243,6 +243,15 @@ async def process_and_save_article(db: AsyncSession, source: Source, item: Dict[
     if image_url:
         logger.info(f"[MEDIA] Kapak görseli indiriliyor ({image_source})")
         local_image_url = await media_service.download_image(image_url, prefix=final_slug[:20])
+        
+    if not local_image_url and image_source == "rss":
+        logger.info("[MEDIA] RSS görseli reddedildi/indirilemedi. Sayfadan orjinal kapak aranıyor...")
+        extracted_imgs = await scraper_service.extract_images(link)
+        if extracted_imgs.get("cover"):
+            image_url = extracted_imgs["cover"]
+            image_source = "scraper"
+            logger.info(f"[MEDIA] Sayfadan orjinal kapak bulundu, indiriliyor...")
+            local_image_url = await media_service.download_image(image_url, prefix=final_slug[:20])
 
     if not local_image_url:
         logger.info("[MEDIA] Kapak görseli başarısız, Fallback API aranıyor...")

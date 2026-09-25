@@ -98,8 +98,8 @@ class MediaService:
                 # verify() çağrısından sonra resmi okumak için tekrar açmak gerekir
                 img = Image.open(io.BytesIO(content))
                 w, h = img.size
-                if w < 200 or h < 150:
-                    logger.warning(f"Görsel çözünürlüğü çok küçük ({w}x{h}), reddedildi: {url}")
+                if w < 600 or h < 350:
+                    logger.warning(f"Görsel çözünürlüğü çok küçük ({w}x{h}) HD zorunluluğu gereği reddedildi: {url}")
                     return None
                 ext = ""
                 if content_type in ALLOWED_MIME_TYPES:
