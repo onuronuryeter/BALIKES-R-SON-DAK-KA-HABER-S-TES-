@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from sqlalchemy.future import select
-from app.database.session import SessionLocal
+from app.database.database import AsyncSessionLocal
 from app.database.models import Source, Category
 
 async def main():
@@ -20,7 +20,7 @@ async def main():
         {"name": "BBC Türkçe - Basın Özeti", "url": "http://www.bbc.co.uk/turkce/basinozeti/index.xml", "category_slug": "guncel"},
     ]
 
-    async with SessionLocal() as db:
+    async with AsyncSessionLocal() as db:
         # 1. Mevcut tüm kaynakları pasife çek
         result = await db.execute(select(Source).where(Source.is_active == True))
         active_sources = result.scalars().all()
