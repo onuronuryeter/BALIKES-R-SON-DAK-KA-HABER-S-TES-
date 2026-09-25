@@ -12,12 +12,13 @@ from app.database.models import Source, Category
 async def main():
     print("Mevcut RSS kaynakları devredışı bırakılıyor ve yeni BBC Türkçe kaynakları ekleniyor...")
     
-    bbc_sources = [
+    sources = [
         {"name": "BBC Türkçe - Haberler", "url": "http://www.bbc.co.uk/turkce/index.xml", "category_slug": "guncel"},
         {"name": "BBC Türkçe - Ekonomi", "url": "http://www.bbc.co.uk/turkce/ekonomi/index.xml", "category_slug": "ekonomi"},
         {"name": "BBC Türkçe - Dünyaya Açılan Pencere", "url": "http://www.bbc.co.uk/turkce/izlenim/index.xml", "category_slug": "dunya"},
         {"name": "BBC Türkçe - Özel Dosyalar", "url": "http://www.bbc.co.uk/turkce/ozeldosyalar/index.xml", "category_slug": "guncel"},
         {"name": "BBC Türkçe - Basın Özeti", "url": "http://www.bbc.co.uk/turkce/basinozeti/index.xml", "category_slug": "guncel"},
+        {"name": "Sputnik Türkiye", "url": "https://tr.sputniknews.com/export/rss2/archive/index.xml", "category_slug": "guncel"},
     ]
 
     async with AsyncSessionLocal() as db:
@@ -33,7 +34,7 @@ async def main():
         categories = {cat.slug: cat.id for cat in result.scalars().all()}
         
         # 3. Yeni kaynakları ekle (Zaten varsa tekrar ekleme, sadece aktifleştir)
-        for feed in bbc_sources:
+        for feed in sources:
             cat_id = categories.get(feed["category_slug"])
             if not cat_id:
                 # Kategori yoksa guncel yapalım
