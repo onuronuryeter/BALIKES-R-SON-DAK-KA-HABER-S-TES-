@@ -572,6 +572,89 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // MODERN BLOK EDİTÖR İÇİN GÖRSEL YÜKLEME (Event Delegation)
+    document.addEventListener('change', async function(e) {
+        if (e.target && e.target.classList.contains('section-file-input')) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // En yakın .content-section-card veya section-image-box'u bulalım
+            const sectionBox = e.target.closest('.section-image-box');
+            if (!sectionBox) return;
+
+            const spinner = sectionBox.querySelector('.section-upload-spinner');
+            const confirmBadge = sectionBox.querySelector('.section-confirm-badge');
+            const urlInput = sectionBox.querySelector('.section-img-url');
+            
+            // Eğer preview elemanları varsa (isteğe bağlı)
+            const previewContainer = sectionBox.querySelector('.section-preview-container');
+            const previewImg = sectionBox.querySelector('.section-image-preview');
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            if (spinner) spinner.style.display = 'inline-block';
+            if (confirmBadge) confirmBadge.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/articles/upload_media', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || 'Yükleme hatası');
+                }
+
+                const data = await response.json();
+                
+                // URL kutusunu doldur
+                if (urlInput) {
+                    urlInput.value = data.url;
+                }
+                
+                // Başarı mesajı göster
+                if (confirmBadge) {
+                    const filenameSpan = confirmBadge.querySelector('.confirm-filename');
+                    if(filenameSpan) filenameSpan.textContent = " (" + file.name + ")";
+                    confirmBadge.style.display = 'flex';
+                }
+
+                // Önizleme görselini güncelle (eğer varsa)
+                if (previewContainer && previewImg) {
+                    previewImg.src = data.url;
+                    previewContainer.style.display = 'block';
+                }
+
+            } catch (error) {
+                alert('Görsel yüklenirken hata oluştu: ' + error.message);
+                console.error(error);
+            } finally {
+                if (spinner) spinner.style.display = 'none';
+                e.target.value = ''; // Input'u resetle ki aynı resmi bir daha seçebilsin
+            }
+        }
+    });
+
+    // Görsel Kaldırma Butonu İşlevi
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('section-image-remove-btn')) {
+            const sectionBox = e.target.closest('.section-image-box');
+            if (!sectionBox) return;
+
+            const urlInput = sectionBox.querySelector('.section-img-url');
+            const previewContainer = sectionBox.querySelector('.section-preview-container');
+            const previewImg = sectionBox.querySelector('.section-image-preview');
+            const confirmBadge = sectionBox.querySelector('.section-confirm-badge');
+
+            if (urlInput) urlInput.value = '';
+            if (previewContainer) previewContainer.style.display = 'none';
+            if (previewImg) previewImg.src = '';
+            if (confirmBadge) confirmBadge.style.display = 'none';
+        }
+    });
 });
 </script>
 {% endblock %}
