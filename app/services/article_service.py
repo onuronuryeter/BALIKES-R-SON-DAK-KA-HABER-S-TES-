@@ -342,17 +342,6 @@ async def process_and_save_article(db: AsyncSession, source: Source, item: Dict[
             is_cover=True
         )
         db.add(media_cover)
-        
-    for lb_img in local_body_images:
-        filename = lb_img.split("/")[-1]
-        media_body = Media(
-            filename=filename,
-            file_path=str(media_service.upload_dir / filename),
-            url=lb_img,
-            article_id=article.id,
-            is_cover=False
-        )
-        db.add(media_body)
 
     await db.commit()
     await db.refresh(article)
