@@ -468,4 +468,110 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Kapak Görseli Yükleme
+    const fileInput = document.getElementById('featured_image_upload');
+    const urlInput = document.getElementById('featured_image');
+    const loadingDiv = document.getElementById('featured_image_loading');
+    const confirmDiv = document.getElementById('featured_image_confirm');
+
+    if(fileInput) {
+        fileInput.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            loadingDiv.style.display = 'block';
+            if(confirmDiv) confirmDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/articles/upload_media', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if(!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || 'Yükleme hatası');
+                }
+
+                const data = await response.json();
+                
+                // URL inputunu doldur
+                urlInput.value = data.url;
+                
+                // Başarı mesajı göster
+                if(confirmDiv) {
+                    confirmDiv.textContent = 'Görsel başarıyla yüklendi!';
+                    confirmDiv.className = 'upload-confirmation-alert alert alert-success mt-2';
+                    confirmDiv.style.display = 'block';
+                    confirmDiv.style.padding = '8px';
+                    confirmDiv.style.borderRadius = '4px';
+                    confirmDiv.style.fontSize = '13px';
+                }
+            } catch (error) {
+                alert('Görsel yüklenirken hata oluştu: ' + error.message);
+                console.error(error);
+            } finally {
+                loadingDiv.style.display = 'none';
+                fileInput.value = ''; // Reset input
+            }
+        });
+    }
+
+    // Klasik Editör İçin Görsel Yükleme
+    const classicFileInput = document.getElementById('classic-pc-upload');
+    const classicSpinner = document.getElementById('classic-upload-spinner');
+    const classicTextarea = document.getElementById('classic-content-textarea');
+
+    if (classicFileInput && classicTextarea) {
+        classicFileInput.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            if(classicSpinner) classicSpinner.style.display = 'inline-block';
+
+            try {
+                const response = await fetch('/api/articles/upload_media', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if(!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || 'Yükleme hatası');
+                }
+
+                const data = await response.json();
+                
+                // Textarea'nın imleç konumuna veya sonuna görseli ekle
+                const imgHtml = `\n<img src="${data.url}" alt="Haber Görseli" style="width:100%;max-width:800px;border-radius:8px;margin:15px 0;">\n`;
+                
+                const startPos = classicTextarea.selectionStart;
+                const endPos = classicTextarea.selectionEnd;
+                
+                classicTextarea.value = classicTextarea.value.substring(0, startPos)
+                    + imgHtml
+                    + classicTextarea.value.substring(endPos, classicTextarea.value.length);
+                
+                // Eğer TinyMCE vs. kullanılıyorsa içeriği güncellemesi için tetikle
+                classicTextarea.dispatchEvent(new Event('change'));
+
+            } catch (error) {
+                alert('Görsel yüklenirken hata oluştu: ' + error.message);
+                console.error(error);
+            } finally {
+                if(classicSpinner) classicSpinner.style.display = 'none';
+                classicFileInput.value = ''; // Reset input
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
