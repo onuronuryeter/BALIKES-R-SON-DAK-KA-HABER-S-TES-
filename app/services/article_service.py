@@ -246,7 +246,7 @@ async def process_and_save_article(db: AsyncSession, source: Source, item: Dict[
 
     if not local_image_url:
         logger.info("[MEDIA] Kapak görseli başarısız, Fallback API aranıyor...")
-        fallback_query = final_title if not category_id else cat.name
+        fallback_query = final_title
         fallback_url, fallback_source = await media_service.get_fallback_image(fallback_query, prefix=final_slug[:20])
         if fallback_url:
             local_image_url = fallback_url
