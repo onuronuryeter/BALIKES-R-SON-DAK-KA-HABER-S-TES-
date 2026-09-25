@@ -480,6 +480,13 @@ async def update_article(
             extracted = extract_first_image_src(content_to_check)
             if extracted:
                 update_data["featured_image"] = extracted
+                update_data["image_status"] = "available"
+                update_data["image_source"] = "extracted"
+    elif "featured_image" in update_data:
+        # Admin tarafından manuel bir görsel sağlandıysa (veya güncellendiyse) durumu düzelt
+        update_data["image_status"] = "available"
+        if not update_data.get("image_source"):
+            update_data["image_source"] = "manual"
 
     # --- HARD IMAGE GATE ---
     if update_data.get("status") == ArticleStatus.PUBLISHED.value:
