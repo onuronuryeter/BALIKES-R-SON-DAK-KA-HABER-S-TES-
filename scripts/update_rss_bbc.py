@@ -19,6 +19,7 @@ async def main():
         {"name": "BBC Türkçe - Özel Dosyalar", "url": "http://www.bbc.co.uk/turkce/ozeldosyalar/index.xml", "category_slug": "guncel"},
         {"name": "BBC Türkçe - Basın Özeti", "url": "http://www.bbc.co.uk/turkce/basinozeti/index.xml", "category_slug": "guncel"},
         {"name": "Sputnik Türkiye", "url": "https://tr.sputniknews.com/export/rss2/archive/index.xml", "category_slug": "guncel"},
+        {"name": "Euronews - Türkiye", "url": "https://tr.euronews.com/haber/avrupa/turkiye", "category_slug": "guncel"},
     ]
 
     async with AsyncSessionLocal() as db:

@@ -64,6 +64,10 @@ class RssService:
 
         logger.info(f"RSS Çekiliyor (HTTPX): {url}")
         
+        # Ozel Euronews HTML Sayfasi (RSS gibi davranmasi icin)
+        if "tr.euronews.com/haber/avrupa/turkiye" in url:
+            return await RssService._fetch_euronews_turkiye(url, max_items)
+            
         try:
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
@@ -185,5 +189,55 @@ class RssService:
         except Exception as e:
             logger.error(f"RSS Parse/İşleme hatası ({url}): {e}")
             raise Exception(f"Parse Error: {str(e)}")
+
+    @staticmethod
+    async def _fetch_euronews_turkiye(url: str, max_items: int) -> List[Dict]:
+        """Euronews Türkiye sayfasını kazıyıp RSS çıktısı formatında listeye çevirir."""
+        logger.info(f"[RSS/SCRAPER] Euronews özel sayfası taranıyor: {url}")
+        try:
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+            async with httpx.AsyncClient(timeout=15.0, verify=False, follow_redirects=True) as client:
+                resp = await client.get(url, headers=headers)
+                resp.raise_for_status()
+                
+            from bs4 import BeautifulSoup
+            from urllib.parse import urljoin
+            from datetime import datetime, timezone
+            
+            soup = BeautifulSoup(resp.content, "html.parser")
+            articles = soup.select("article")
+            results = []
+            
+            for art in articles:
+                if len(results) >= max_items:
+                    break
+                    
+                title_tag = art.select_one("h3.m-object__title a") or art.select_one("a.m-object__title__link") or art.select_one("a.the-media-object__link")
+                if not title_tag:
+                    continue
+                    
+                title = title_tag.get("title") or title_tag.get_text(strip=True)
+                link = urljoin(url, title_tag.get("href"))
+                
+                img_tag = art.select_one("img")
+                img_url = img_tag.get("data-src") or img_tag.get("src") if img_tag else None
+                
+                if not title or not link:
+                    continue
+                    
+                results.append({
+                    "title": title,
+                    "link": link,
+                    "summary": title,
+                    "content": title,
+                    "image_url": img_url,
+                    "published": datetime.now(timezone.utc)
+                })
+                
+            logger.info(f"[RSS/SCRAPER] Euronews'den {len(results)} makale başarıyla çıkartıldı.")
+            return results
+        except Exception as e:
+            logger.error(f"[RSS/SCRAPER] Euronews çekiminde hata: {e}")
+            return []
 
 rss_service = RssService()
