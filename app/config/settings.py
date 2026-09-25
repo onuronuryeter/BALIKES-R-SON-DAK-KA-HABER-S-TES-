@@ -71,7 +71,7 @@ class Settings(BaseSettings):
     PIXABAY_API_KEY: Optional[str] = None
 
     # --- RSS & Haber Toplama ---
-    RSS_FETCH_INTERVAL_MINUTES: int = 15
+    RSS_FETCH_INTERVAL_MINUTES: int = 1
     MAX_ARTICLES_PER_SOURCE: int = 50
 
     # --- Dosya Yükleme ---
