@@ -262,47 +262,10 @@ async def process_and_save_article(db: AsyncSession, source: Source, item: Dict[
         logger.info("[MEDIA] KAPAK GÖRSELİ BAŞARILI.")
 
     # --- GÖVDE GÖRSELLERİNİ İNDİR VE HTML'E ENJEKTE ET ---
-    local_body_images = []
-    if body_images:
-        logger.info(f"[MEDIA] {len(body_images)} adet içerik (body) görseli indiriliyor...")
-        for b_img_url in body_images[:5]: # Maksimum 5 içerik fotoğrafı al
-            if b_img_url != image_url: # Kapak görselini içeriğe tekrar basma
-                l_b_img = await media_service.download_image(b_img_url, prefix=final_slug[:15])
-                if l_b_img:
-                    local_body_images.append(l_b_img)
-    
-    # HTML içerisine gövde görsellerini yay
-    if local_body_images:
-        soup = BeautifulSoup(final_content, "html.parser")
-        paragraphs = soup.find_all("p")
-        
-        # Paragraflar arasına enjekte et (Örn: 2., 4., 6. p sonrası)
-        for idx, l_img in enumerate(local_body_images):
-            target_p_idx = (idx + 1) * 2 - 1
-            
-            # Figure elementi oluştur
-            figure_tag = soup.new_tag("figure")
-            figure_tag["class"] = "article-content-figure my-4 text-center"
-            
-            img_tag = soup.new_tag("img", src=l_img, alt=f"{final_title} - Görsel {idx+1}")
-            img_tag["class"] = "img-fluid rounded w-100 shadow-sm" 
-            img_tag["loading"] = "lazy"
-            figure_tag.append(img_tag)
-            
-            # Figcaption ekle
-            figcaption = soup.new_tag("figcaption")
-            figcaption["class"] = "figure-caption mt-2 text-muted text-start"
-            figcaption.string = f"{final_title} - Haber Görseli {idx+1}"
-            figure_tag.append(figcaption)
-            
-            if target_p_idx < len(paragraphs):
-                paragraphs[target_p_idx].insert_after(figure_tag)
-            else:
-                # Yeterli paragraf yoksa haberin sonuna ekle
-                soup.append(figure_tag)
-                
-        final_content = str(soup)
-        logger.info(f"[MEDIA] {len(local_body_images)} görsel haber metnine eklendi.")
+    # --- GÖVDE GÖRSELLERİNİ İNDİR VE HTML'E ENJEKTE ET KISMI İPTAL EDİLDİ ---
+    # Kullanıcı talebi: İlgisiz haber görsellerinin (ilgili haberler widget'larından gelen) 
+    # içeriğe karışmasını önlemek için body_images kullanılmayacak.
+    # Kapak görseli (HD) zaten makalenin en üstünde sergileniyor.
 
     source_append = f"\n\n<hr><p><strong>Kaynak:</strong> {source.name}<br><strong>Orijinal Haber:</strong> <a href='{link}' target='_blank'>Orijinal haberi görüntüle</a></p>"
     final_content += source_append
