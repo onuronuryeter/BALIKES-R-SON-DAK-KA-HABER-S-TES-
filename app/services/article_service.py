@@ -200,39 +200,39 @@ async def process_and_save_article(db: AsyncSession, source: Source, item: Dict[
     
     # Kategori Bulma Önceliği
     category_id = None
-    
-    # 1. RSS Source Mapping (En Yüksek Öncelik)
-    if source and source.category_id:
-        category_id = source.category_id
         
-    # 2. cat_slug_to_assign (Yapay Zeka vb. dışarıdan müdahale)
+    # 1. cat_slug_to_assign (Yapay Zeka vb. dışarıdan müdahale)
     if not category_id and cat_slug_to_assign:
         cat_r = await db.execute(select(Category).where(Category.slug.like(f"%{cat_slug_to_assign}%")))
         cat = cat_r.scalars().first()
         if cat:
             category_id = cat.id
             
-    # 3. Mevcut Relevance Engine
+    # 2. Balıkesir Bölgesi Önceliği
+    if not category_id and matched_regions:
+        region = matched_regions[0]
+        cat_r = await db.execute(select(Category).where(Category.slug == region))
+        cat = cat_r.scalar_one_or_none()
+        if cat:
+            category_id = cat.id
+
+    # 3. Mevcut Relevance Engine (AI veya Kelime Bazlı Kategorizasyon)
     if not category_id and suggested_category:
         cat_r = await db.execute(select(Category).where(Category.slug == suggested_category))
         cat = cat_r.scalar_one_or_none()
         if cat:
             category_id = cat.id
+            
+    # 4. RSS Source Mapping (Eğer bot hiçbir kategori bulamazsa, kaynağın varsayılan kategorisini kullan)
+    if not category_id and source and source.category_id:
+        category_id = source.category_id
 
+    # 5. Fallback (Güncel)
     if not category_id:
-        if matched_regions:
-            region = matched_regions[0]
-            cat_r = await db.execute(select(Category).where(Category.slug == region))
-            cat = cat_r.scalar_one_or_none()
-            if cat:
-                category_id = cat.id
-        
-        # 4. Fallback (Güncel)
-        if not category_id:
-            cat_r = await db.execute(select(Category).where(Category.slug == "guncel"))
-            cat = cat_r.scalar_one_or_none()
-            if cat:
-                category_id = cat.id
+        cat_r = await db.execute(select(Category).where(Category.slug == "guncel"))
+        cat = cat_r.scalar_one_or_none()
+        if cat:
+            category_id = cat.id
 
     status = ArticleStatus.PUBLISHED.value
     is_published = True

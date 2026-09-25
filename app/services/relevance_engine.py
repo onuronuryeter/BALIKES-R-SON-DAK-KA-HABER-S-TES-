@@ -47,11 +47,17 @@ KEYWORDS = {
 
 NATIONAL_KEYWORDS = {
     "spor": ["futbol", "basketbol", "voleybol", "fenerbahçe", "galatasaray", "beşiktaş", "trabzonspor", "milli takım", "şampiyonlar ligi", "premier lig"],
-    "ekonomi": ["enflasyon", "merkez bankası", "ekonomi", "faiz", "dolar", "euro", "borsa", "ihracat", "ithalat"],
-    "gundem": ["cumhurbaşkanı", "bakan", "tbmm", "milletvekili", "siyaset", "seçim", "polis", "jandarma", "operasyon"],
-    "saglik": ["sağlık bakanlığı", "hastane", "doktor", "tedavi", "salgın", "virüs"],
-    "egitim": ["milli eğitim", "meb", "okul", "öğrenci", "öğretmen", "üniversite", "yök", "sınav"],
-    "teknoloji": ["teknoloji", "yapay zeka", "yazılım", "internet", "sosyal medya"],
+    "ekonomi": ["enflasyon", "merkez bankası", "ekonomi", "faiz", "dolar", "euro", "borsa", "ihracat", "ithalat", "altın", "kripto", "bitcoin"],
+    "politika": ["cumhurbaşkanı", "bakan", "tbmm", "milletvekili", "siyaset", "seçim", "parti", "chp", "akp", "mhp", "iyi parti"],
+    "guncel": ["polis", "jandarma", "operasyon", "kaza", "yangın", "deprem", "afad", "uyarı", "sondakika", "gelişme"],
+    "saglik": ["sağlık bakanlığı", "hastane", "doktor", "tedavi", "salgın", "virüs", "kanser", "ilaç"],
+    "egitim": ["milli eğitim", "meb", "okul", "öğrenci", "öğretmen", "üniversite", "yök", "sınav", "yks", "lgs"],
+    "teknoloji": ["teknoloji", "yapay zeka", "yazılım", "internet", "sosyal medya", "google", "apple", "microsoft", "telefon", "bilgisayar"],
+    "magazin": ["oyuncu", "şarkıcı", "ünlü", "konser", "dizi", "film", "sinema", "televizyon", "magazin", "aşk"],
+    "dunya": ["abd", "avrupa", "rusya", "ukrayna", "savaş", "birleşmiş milletler", "nato", "israil", "filistin", "dünya"],
+    "otomobil": ["otomobil", "araç", "araba", "togg", "motor", "trafik"],
+    "turizm": ["turizm", "tatil", "otel", "turist", "plaj", "uçuş", "havalimanı"],
+    "3-sayfa": ["cinayet", "silah", "saldırı", "hırsızlık", "gözaltı", "tutuklandı", "mahkeme", "dava"]
 }
 
 def normalize_text(text: str) -> str:
