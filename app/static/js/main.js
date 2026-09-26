@@ -431,7 +431,15 @@ function initArticleForm() {
       const alignSelect = card.querySelector('.section-img-align');
       const imgAlign = alignSelect ? alignSelect.value : 'full-width';
 
-      // 1. Metin Bloğu
+      const headingInput = card.querySelector('.section-heading');
+      const headingText = headingInput ? headingInput.value.trim() : '';
+
+      // 1. Alt Başlık Bloğu
+      if (headingText) {
+        parts.push(`<h3><strong>${headingText}</strong></h3>`);
+      }
+
+      // 2. Metin Bloğu
       if (text) {
         if (text.startsWith('<p>') || text.includes('</p>')) {
           parts.push(text);
@@ -443,7 +451,7 @@ function initArticleForm() {
         }
       }
 
-      // 2. Görsel Bloğu
+      // 3. Görsel Bloğu
       if (imgUrl) {
         const captionHtml = imgCaption ? `\n  <figcaption>${imgCaption}</figcaption>` : '';
         const figHtml = `<figure class="article-figure ${imgAlign}">\n  <img src="${imgUrl}" alt="${imgCaption || 'Haber Görseli'}" loading="lazy">${captionHtml}\n</figure>`;
@@ -477,6 +485,7 @@ function initArticleForm() {
     const urlInput = card.querySelector('.section-img-url');
     const captionInput = card.querySelector('.section-img-caption');
     const alignSelect = card.querySelector('.section-img-align');
+    const headingInput = card.querySelector('.section-heading');
     const textArea = card.querySelector('.section-text');
     const removeBtn = card.querySelector('.section-image-remove-btn');
     const spinner = card.querySelector('.section-upload-spinner');
@@ -524,6 +533,10 @@ function initArticleForm() {
       alignSelect.addEventListener('change', compileSectionsToContent);
     }
 
+    if (headingInput) {
+      headingInput.addEventListener('input', compileSectionsToContent);
+    }
+
     if (textArea) {
       textArea.addEventListener('input', compileSectionsToContent);
     }
@@ -567,6 +580,7 @@ function initArticleForm() {
           <span class="section-badge custom">📍 ${newIdx}. BÖLÜM — EK BÖLÜM</span>
           <button type="button" class="btn btn-secondary btn-sm section-delete-card-btn" style="color:#dc2626;border-color:#fca5a5;">🗑️ Bu Bölümü Sil</button>
         </div>
+        <input type="text" class="form-control section-heading" placeholder="Siyah Kalın Alt Başlık (İsteğe bağlı)..." style="margin-bottom:8px;font-weight:bold;color:#000;">
         <textarea class="form-control section-text" rows="4" placeholder="Bu bölümün haber metni..."></textarea>
         
         <div class="section-image-box">
@@ -673,8 +687,24 @@ function initArticleForm() {
               updateSectionPreview(card);
             }
             currentSectionIdx++;
+          } else if (node.tagName && node.tagName.toLowerCase() === 'h3') {
+            let card = existingCards[currentSectionIdx];
+            if (!card && addNewSectionBtn) {
+              addNewSectionBtn.click();
+              existingCards = sectionsWrapper.querySelectorAll('.content-section-card');
+              card = existingCards[currentSectionIdx];
+            }
+            if (card) {
+              const headingInput = card.querySelector('.section-heading');
+              if (headingInput && !headingInput.value) {
+                headingInput.value = node.textContent.trim();
+              } else {
+                const pText = node.textContent.trim();
+                if (pText) textBuffer.push(`<h3><strong>${pText}</strong></h3>`);
+              }
+            }
           } else {
-            const pText = node.textContent.trim();
+            const pText = node.innerHTML ? node.innerHTML.trim() : node.textContent.trim();
             if (pText) textBuffer.push(pText);
           }
         } else if (node.nodeType === Node.TEXT_NODE) {
