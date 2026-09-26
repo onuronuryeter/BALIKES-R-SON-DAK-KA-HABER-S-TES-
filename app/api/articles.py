@@ -279,33 +279,56 @@ async def upload_media(
     _: object = Depends(require_admin)
 ):
     """Admin: Manuel görsel yükle (Kapak & İçerik)"""
-    allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif", "image/avif"]
-    if file.content_type not in allowed_types:
-        raise HTTPException(status_code=400, detail=f"Desteklenmeyen dosya formatı: {file.content_type}")
+    
+    # 1. İçerik ve Dosya Boyutu Kontrolü
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Yüklenen dosya boş.")
+        
+    # 2. Format Doğrulaması (İyileştirilmiş)
+    content_type = (file.content_type or "").lower()
+    filename_lower = (file.filename or "").lower()
+    
+    allowed_mimes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif", "image/avif", "image/pjpeg", "image/x-png"]
+    allowed_exts = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif")
+    
+    is_valid_mime = any(mime in content_type for mime in allowed_mimes)
+    is_valid_ext = filename_lower.endswith(allowed_exts)
+    
+    if not (is_valid_mime or is_valid_ext):
+        raise HTTPException(status_code=400, detail=f"Desteklenmeyen dosya formatı: {content_type or 'Bilinmiyor'} veya geçersiz uzantı.")
+    
+    # Uzantıyı belirle
+    ext = ".jpg"
+    if "png" in content_type or filename_lower.endswith(".png"): ext = ".png"
+    elif "webp" in content_type or filename_lower.endswith(".webp"): ext = ".webp"
+    elif "gif" in content_type or filename_lower.endswith(".gif"): ext = ".gif"
+    elif "avif" in content_type or filename_lower.endswith(".avif"): ext = ".avif"
+    elif filename_lower.endswith(".jpeg"): ext = ".jpeg"
     
     # media_service klasörünü kullan
     from app.services.media_service import media_service
     import hashlib
     
-    content = await file.read()
     content_hash = hashlib.sha256(content).hexdigest()[:16]
+    new_filename = f"manual_{content_hash}{ext}"
     
-    ext = ".jpg"
-    if file.content_type == "image/png": ext = ".png"
-    elif file.content_type == "image/webp": ext = ".webp"
-    elif file.content_type == "image/gif": ext = ".gif"
-    elif file.content_type == "image/avif": ext = ".avif"
+    # Dizin kontrolü ve oluşturma
+    upload_dir = media_service.upload_dir
+    try:
+        upload_dir.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Klasör oluşturulamadı: {str(e)}")
         
-    filename = f"manual_{content_hash}{ext}"
-    file_path = media_service.upload_dir / filename
-    local_url = f"/media/articles/{filename}"
+    file_path = upload_dir / new_filename
+    local_url = f"/media/articles/{new_filename}"
     
     try:
         if not file_path.exists():
             with open(file_path, "wb") as f:
                 f.write(content)
     except PermissionError:
-        raise HTTPException(status_code=500, detail="Sunucuda klasör yazma izni (Permission) hatası var. Lütfen SSH'tan 'sudo chown -R www-data:www-data data/' komutunu çalıştırın.")
+        raise HTTPException(status_code=500, detail="Sunucuda klasör yazma izni (Permission) hatası var. Klasör izinlerini kontrol edin.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Dosya kaydedilemedi: {str(e)}")
             
